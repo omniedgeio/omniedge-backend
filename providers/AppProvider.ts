@@ -1,22 +1,29 @@
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { ApplicationContract } from "@ioc:Adonis/Core/Application";
 
 export default class AppProvider {
-  constructor (protected app: ApplicationContract) {
-  }
+  constructor(protected app: ApplicationContract) {}
 
-  public register () {
+  public register() {
     // Register your own bindings
   }
 
-  public async boot () {
+  public async boot() {
     // IoC container is ready
+    const Response = this.app.container.use("Adonis/Core/Response");
+
+    Response.macro("format", function (status, data) {
+      return this.status(status).json({
+        code: status,
+        ...(typeof data === "string" ? { message: data } : { data }),
+      });
+    });
   }
 
-  public async ready () {
+  public async ready() {
     // App is ready
   }
 
-  public async shutdown () {
+  public async shutdown() {
     // Cleanup, since app is going down
   }
 }
