@@ -18,10 +18,13 @@ export default class SecurityKey extends BaseModel {
   public userId: string;
 
   @column()
-  public hash: string;
+  public name: string;
 
   @column()
-  public lstr: string;
+  public type: string;
+
+  @column()
+  public token: string;
 
   @column()
   public keyType: SecurityKeyType;

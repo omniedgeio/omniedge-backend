@@ -103,7 +103,24 @@ const authConfig: AuthConfig = {
         model: () => import('App/Models/User'),
       },
     },
+    key: {
+      driver: 'oat',
+
+      tokenProvider: {
+        type: 'key',
+        driver: 'database',
+        table: 'security_keys',
+        foreignKey: 'user_id',
+      },
+
+      provider: {
+        driver: 'lucid',
+        identifierKey: 'id',
+        uids: ['user_id'],
+        model: () => import('App/Models/User'),
+      },
+    },
   },
-}
+} as AuthConfig
 
 export default authConfig

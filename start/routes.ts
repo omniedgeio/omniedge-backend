@@ -78,5 +78,6 @@ Route.group(() => {
     Route.get("/", "SecurityKeysController.list");
     Route.put("/:id", "SecurityKeysController.update");
     Route.delete("/:id", "SecurityKeysController.delete");
-  }).prefix("/security-keys");
+  }).prefix("/security-keys")
+    .middleware('auth');
 }).prefix("/api");
