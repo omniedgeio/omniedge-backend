@@ -26,5 +26,7 @@ export default Env.rules({
   PG_USER: Env.schema.string(),
   PG_PASSWORD: Env.schema.string.optional(),
   PG_DB_NAME: Env.schema.string(),
-  LOGIN_TOKEN: Env.schema.string()
+  LOGIN_TOKEN_EXPIRE: Env.schema.string(),
+  ONE_TIME_SECURITY_KEY_EXPIRE: Env.schema.string(),
+  NORMAL_SECURITY_KEY_EXPIRE: Env.schema.string()
 });

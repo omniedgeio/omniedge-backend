@@ -11,22 +11,23 @@ export default class SecurityKeysController {
     })
     const payload = await request.validate({schema: createSchema})
     let token;
+    // todo save token to database (table security key)
     switch (payload.type) {
       case 1:
-        token = await auth.use('key').generate(auth.user!!, {
-          expiresIn: process.env.LOGIN_TOKEN,
+        token = await auth.use('jwt').generate(auth.user!!, {
+          expiresIn: process.env.NORMAL_SECURITY_KEY_EXPIRE,
           name: payload.name,
         })
         response.status(200).send(token)
         return
       case 2:
-        token = await auth.use('key').generate(auth.user!!, {
-          expiresIn: process.env.LOGIN_TOKEN,
+        token = await auth.use('jwt').generate(auth.user!!, {
+          //todo change expire time
+          expiresIn: process.env.ONE_TIME_SECURITY_KEY_EXPIRE,
           name: payload.name,
         })
         response.status(200).send(token)
         break
     }
-
   }
 }

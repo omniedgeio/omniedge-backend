@@ -4,7 +4,6 @@ import User from 'App/Models/User'
 
 export default class AuthController {
   public async register({request, response}: HttpContextContract) {
-    // todo check email(to lower case)
     const authSchema = schema.create({
       email: schema.string({trim: true,}, [
         rules.email({
@@ -31,13 +30,16 @@ export default class AuthController {
 
   public async loginWithPassword({request, response, auth}: HttpContextContract) {
     const authSchema = schema.create({
-      email: schema.string({trim: true}, [rules.email()]),
+      email: schema.string({trim: true}, [rules.email({
+        sanitize: {
+          lowerCase: true
+        }
+      })]),
       password: schema.string({trim: true}),
     })
     const payload = await request.validate({schema: authSchema})
-    const email = payload.email.toLowerCase()
-    const token = await auth.attempt(email, payload.password, {
-      expiresIn: process.env.LOGIN_TOKEN,
+    const token = await auth.attempt(payload.email, payload.password, {
+      expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
     response.status(200).send(token)
   }
@@ -47,15 +49,9 @@ export default class AuthController {
       key: schema.string({trim: true}),
     })
     const payload = await request.validate({schema: authSchema})
-    const securityKey = payload.key
-    const token = await auth.attempt(email, payload.password, {
-      expiresIn: process.env.LOGIN_TOKEN,
+    const token = await auth.use('jwt').attemptSecretKey(payload.key, {
+      expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
     response.status(200).send(token)
-  }
-
-  public async profile({auth}: HttpContextContract) {
-    const user = await auth.user!!
-    return user
   }
 }

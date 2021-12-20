@@ -6,6 +6,7 @@
  */
 
 import {AuthConfig} from '@ioc:Adonis/Addons/Auth'
+import Env from "@ioc:Adonis/Core/Env";
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +18,7 @@ import {AuthConfig} from '@ioc:Adonis/Addons/Auth'
 |
 */
 const authConfig: AuthConfig = {
-  guard: 'api',
+  guard: 'jwt',
   guards: {
     /*
     |--------------------------------------------------------------------------
@@ -103,22 +104,25 @@ const authConfig: AuthConfig = {
         model: () => import('App/Models/User'),
       },
     },
-    key: {
-      driver: 'oat',
-
+    jwt: {
+      driver: "jwt",
+      publicKey: Env.get('JWT_PUBLIC_KEY', '').replace(/\\n/g, '\n'),
+      privateKey: Env.get('JWT_PRIVATE_KEY', '').replace(/\\n/g, '\n'),
+      persistJwt: true,
+      jwtDefaultExpire: '5days',
+      refreshTokenDefaultExpire: '14days',
       tokenProvider: {
-        type: 'key',
+        type: 'api',
         driver: 'database',
-        table: 'security_keys',
-        foreignKey: 'user_id',
+        table: 'jwt_tokens',
+        foreignKey: 'user_id'
       },
-
       provider: {
-        driver: 'lucid',
-        identifierKey: 'id',
-        uids: ['user_id'],
-        model: () => import('App/Models/User'),
-      },
+        driver: "lucid",
+        identifierKey: "id",
+        uids: [],
+        model: () => import('App/Models/User')
+      }
     },
   },
 } as AuthConfig
