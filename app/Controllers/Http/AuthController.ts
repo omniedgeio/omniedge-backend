@@ -1,6 +1,7 @@
 import {HttpContextContract} from '@ioc:Adonis/Core/HttpContext'
 import {rules, schema} from '@ioc:Adonis/Core/Validator'
 import User from 'App/Models/User'
+import {CustomReporter} from "App/Validators/Reporters/CustomReporter";
 
 export default class AuthController {
   public async register({request, response}: HttpContextContract) {
@@ -19,7 +20,7 @@ export default class AuthController {
       name: schema.string({trim: true}),
       password: schema.string({trim: true}),
     })
-    const payload = await request.validate({schema: authSchema})
+    const payload = await request.validate({schema: authSchema, reporter: CustomReporter})
     const user = await User.create(payload)
     if (user.$isPersisted) {
       response.status(201).send(user)
@@ -37,7 +38,7 @@ export default class AuthController {
       })]),
       password: schema.string({trim: true}),
     })
-    const payload = await request.validate({schema: authSchema})
+    const payload = await request.validate({schema: authSchema, reporter: CustomReporter})
     const token = await auth.attempt(payload.email, payload.password, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
@@ -48,7 +49,7 @@ export default class AuthController {
     const authSchema = schema.create({
       key: schema.string({trim: true}),
     })
-    const payload = await request.validate({schema: authSchema})
+    const payload = await request.validate({schema: authSchema, reporter: CustomReporter})
     const token = await auth.use('jwt').attemptSecretKey(payload.key, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })

@@ -1,5 +1,6 @@
 import {HttpContextContract} from "@ioc:Adonis/Core/HttpContext";
 import {rules, schema} from '@ioc:Adonis/Core/Validator'
+import {CustomReporter} from "App/Validators/Reporters/CustomReporter";
 
 export default class SecurityKeysController {
   public async create({request, response, auth}: HttpContextContract) {
@@ -9,7 +10,7 @@ export default class SecurityKeysController {
       ]),
       type: schema.enum([1, 2] as const)
     })
-    const payload = await request.validate({schema: createSchema})
+    const payload = await request.validate({schema: createSchema, reporter: CustomReporter})
     let token;
     // todo save token to database (table security key)
     switch (payload.type) {
