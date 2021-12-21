@@ -52,7 +52,7 @@ Route.group(() => {
     }).prefix("/virtual-networks");
 
     Route.group(() => {
-      Route.post("/", "DevicesController.create");
+      Route.post("/", "DevicesController.register");
       Route.get("/", "DevicesController.list");
       Route.get("/:id", "DevicesController.retrieve");
       Route.put("/:id", "DevicesController.update");

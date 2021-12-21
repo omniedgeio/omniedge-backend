@@ -1,3 +1,5 @@
+import { Filterable } from "@ioc:Adonis/Addons/LucidFilter";
+import { compose } from "@ioc:Adonis/Core/Helpers";
 import {
   BaseModel,
   beforeCreate,
@@ -9,14 +11,17 @@ import {
 } from "@ioc:Adonis/Lucid/Orm";
 import { DateTime } from "luxon";
 import { modelId } from "./../../utils/nanoid";
+import DeviceFilter from "./Filters/DeviceFilter";
 import User from "./User";
 import VirtualNetwork from "./VirtualNetwork";
 
-export default class Device extends BaseModel {
+export default class Device extends compose(BaseModel, Filterable) {
+  public static $filter = () => DeviceFilter;
+
   @column({ isPrimary: true })
   public id: string;
 
-  @column()
+  @column({ serializeAs: null })
   public userId: string;
 
   @column()
