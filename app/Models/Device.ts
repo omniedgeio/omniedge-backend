@@ -33,6 +33,7 @@ export default class Device extends BaseModel {
 
   @manyToMany(() => VirtualNetwork, {
     pivotTable: "virtual_network_device",
+    pivotColumns: ["virtual_ip"],
   })
   public virtualNetworks: ManyToMany<typeof VirtualNetwork>;
 
@@ -45,5 +46,11 @@ export default class Device extends BaseModel {
   @beforeCreate()
   public static async createID(model: Device) {
     model.id = "dev_" + modelId();
+  }
+
+  public serializeExtras() {
+    return {
+      virtual_ip: this.$extras?.pivot_virtual_ip,
+    };
   }
 }

@@ -1,20 +1,22 @@
 import BaseSchema from "@ioc:Adonis/Lucid/Schema";
-import { UserRole } from "./../../contracts/enum";
 
-export default class UserVirtualNetworks extends BaseSchema {
-  protected tableName = "user_virtual_networks";
+export default class VirtualNetworkDevice extends BaseSchema {
+  protected tableName = "virtual_network_device";
 
   public async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.bigIncrements("id");
-      table.string("user_id", 24).references("id").inTable("users");
+
+      table.string("device_id", 24).references("id").inTable("devices");
 
       table
         .string("virtual_network_id", 24)
         .references("id")
         .inTable("virtual_networks");
 
-      table.tinyint("role").notNullable().defaultTo(UserRole.User);
+      table.string("virtual_ip", 40).notNullable();
+
+      table.timestamp("last_seen");
 
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL

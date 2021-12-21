@@ -54,7 +54,8 @@ export default class User extends BaseModel {
   public identities: HasMany<typeof Identity>;
 
   @manyToMany(() => VirtualNetwork, {
-    pivotTable: "virtual_network_user",
+    pivotTable: "user_virtual_network",
+    pivotColumns: ["role"],
   })
   public virtualNetworks: ManyToMany<typeof VirtualNetwork>;
 

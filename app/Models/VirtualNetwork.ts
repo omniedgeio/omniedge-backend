@@ -1,3 +1,5 @@
+import { Filterable } from "@ioc:Adonis/Addons/LucidFilter";
+import { compose } from "@ioc:Adonis/Core/Helpers";
 import {
   BaseModel,
   beforeCreate,
@@ -10,10 +12,13 @@ import {
 import { DateTime } from "luxon";
 import { modelId } from "./../../utils/nanoid";
 import Device from "./Device";
+import VirtualNetworkFilter from "./Filters/VirtualNetworkFilter";
 import Server from "./Server";
 import User from "./User";
 
-export default class VirtualNetwork extends BaseModel {
+export default class VirtualNetwork extends compose(BaseModel, Filterable) {
+  public static $filter = () => VirtualNetworkFilter;
+
   @column({ isPrimary: true })
   public id: string;
 
@@ -31,11 +36,13 @@ export default class VirtualNetwork extends BaseModel {
 
   @manyToMany(() => Device, {
     pivotTable: "virtual_network_device",
+    pivotColumns: ["virtual_ip"],
   })
   public devices: ManyToMany<typeof Device>;
 
   @manyToMany(() => User, {
     pivotTable: "user_virtual_network",
+    pivotColumns: ["role"],
   })
   public users: ManyToMany<typeof User>;
 
@@ -48,5 +55,11 @@ export default class VirtualNetwork extends BaseModel {
   @beforeCreate()
   public static async createID(model: VirtualNetwork) {
     model.id = "vnw_" + modelId();
+  }
+
+  public serializeExtras() {
+    return {
+      role: this.$extras.pivot_role,
+    };
   }
 }
