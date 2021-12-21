@@ -55,4 +55,15 @@ export default class AuthController {
     })
     response.status(200).send(token)
   }
+
+  public async loginWithGoogle({request, response, auth}: HttpContextContract) {
+    const authSchema = schema.create({
+      id_token: schema.string({trim: true}),
+    })
+    const payload = await request.validate({schema: authSchema, reporter: CustomReporter})
+
+    response.status(200).send(token)
+  }
+
+
 }

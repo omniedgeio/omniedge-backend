@@ -22,7 +22,8 @@
     "@adonisjs/core",
     "@adonisjs/lucid",
     "@adonisjs/auth",
-    "@ivyxjc/adonis5-jwt"
+    "@ivyxjc/adonis5-jwt",
+    "@adonisjs/ally"
   ],
   "aceProviders": [
     "@adonisjs/repl"

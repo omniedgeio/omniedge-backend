@@ -30,7 +30,8 @@
       "@adonisjs/repl",
       "@adonisjs/lucid",
       "@adonisjs/auth",
-      "@ivyxjc/adonis5-jwt"
+      "@ivyxjc/adonis5-jwt",
+      "@adonisjs/ally"
     ]
   }
 }
