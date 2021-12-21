@@ -60,6 +60,8 @@ export default class VirtualNetwork extends compose(BaseModel, Filterable) {
   public serializeExtras() {
     return {
       role: this.$extras.pivot_role,
+      users_count: parseInt(this.$extras.users_count),
+      devices_count: parseInt(this.$extras.devices_count),
     };
   }
 }

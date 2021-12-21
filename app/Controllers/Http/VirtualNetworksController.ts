@@ -37,6 +37,12 @@ export default class VirtualNetworksController {
       ?.related("virtualNetworks")
       .query()
       .filter(request.qs())
+      .withAggregate("users", (query) => {
+        query.count("*").as("users_count");
+      })
+      .withAggregate("devices", (query) => {
+        query.count("*").as("devices_count");
+      })
       .paginate(
         Math.round(Math.max(request.input("page") || 1, 1)),
         Math.round(Math.max(request.input("per_page") || 10, 10))
@@ -50,6 +56,12 @@ export default class VirtualNetworksController {
       ?.related("virtualNetworks")
       .query()
       .where("virtual_networks.id", params.id)
+      .withAggregate("users", (query) => {
+        query.count("*").as("users_count");
+      })
+      .withAggregate("devices", (query) => {
+        query.count("*").as("devices_count");
+      })
       .first();
 
     if (!virtualNetwork) {
