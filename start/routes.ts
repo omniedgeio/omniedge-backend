@@ -60,10 +60,10 @@ Route.group(() => {
     }).prefix("/devices");
 
     Route.group(() => {
-      Route.post("/", "InvitationController.create");
-      Route.get("/", "InvitationController.list");
-      Route.put("/:id", "InvitationController.update");
-      Route.delete("/:id", "InvitationController.delete");
+      Route.post("/", "InvitationsController.create");
+      Route.get("/", "InvitationsController.list");
+      Route.put("/:id", "InvitationsController.update");
+      Route.delete("/:id", "InvitationsController.delete");
     }).prefix("/invitations");
 
     Route.group(() => {

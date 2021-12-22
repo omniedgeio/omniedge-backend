@@ -6,6 +6,7 @@ import {
   column,
 } from "@ioc:Adonis/Lucid/Orm";
 import { DateTime } from "luxon";
+import { InvitationStatus } from "./../../contracts/enum";
 import { modelId } from "./../../utils/nanoid";
 import User from "./User";
 import VirtualNetwork from "./VirtualNetwork";
@@ -15,23 +16,26 @@ export default class Invitation extends BaseModel {
   public id: string;
 
   // User who got the invitation
-  @column()
+  @column({ serializeAs: null })
   public invitedUserId: string;
 
   // User who sent the invitation
-  @column()
+  @column({ serializeAs: null })
   public invitedByUserId: string;
 
+  @column({ serializeAs: null })
+  public virtualNetworkId: string;
+
   @column()
-  public VirtualNetworkId: string;
+  public status: InvitationStatus;
 
   @belongsTo(() => User, {
-    foreignKey: "invited_user_id",
+    foreignKey: "invitedUserId",
   })
   public invited: BelongsTo<typeof User>;
 
   @belongsTo(() => User, {
-    foreignKey: "invited_by_user_id",
+    foreignKey: "invitedByUserId",
   })
   public invitedBy: BelongsTo<typeof User>;
 

@@ -1,4 +1,5 @@
 import BaseSchema from "@ioc:Adonis/Lucid/Schema";
+import { InvitationStatus } from "./../../contracts/enum";
 
 export default class Invitations extends BaseSchema {
   protected tableName = "invitations";
@@ -17,6 +18,8 @@ export default class Invitations extends BaseSchema {
         .string("virtual_network_id", 24)
         .references("id")
         .inTable("virtual_networks");
+
+      table.tinyint("status").defaultTo(InvitationStatus.Pending);
 
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL

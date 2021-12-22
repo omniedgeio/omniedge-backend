@@ -14,6 +14,12 @@ export enum SecurityKeyType {
   Temporary = 2,
 }
 
+export enum InvitationStatus {
+  Pending = 1,
+  Accepted = 2,
+  Rejected = 3,
+}
+
 export enum Country {
   UnitedStates = "US",
   Afghanistan = "AF",

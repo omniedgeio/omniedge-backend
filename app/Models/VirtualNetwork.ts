@@ -6,6 +6,8 @@ import {
   BelongsTo,
   belongsTo,
   column,
+  HasMany,
+  hasMany,
   ManyToMany,
   manyToMany,
 } from "@ioc:Adonis/Lucid/Orm";
@@ -13,6 +15,7 @@ import { DateTime } from "luxon";
 import { modelId } from "./../../utils/nanoid";
 import Device from "./Device";
 import VirtualNetworkFilter from "./Filters/VirtualNetworkFilter";
+import Invitation from "./Invitation";
 import Server from "./Server";
 import User from "./User";
 
@@ -45,6 +48,9 @@ export default class VirtualNetwork extends compose(BaseModel, Filterable) {
     pivotColumns: ["role"],
   })
   public users: ManyToMany<typeof User>;
+
+  @hasMany(() => Invitation)
+  public invitations: HasMany<typeof Invitation>;
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime;
