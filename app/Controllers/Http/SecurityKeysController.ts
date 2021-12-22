@@ -19,7 +19,7 @@ export default class SecurityKeysController {
           expiresIn: process.env.NORMAL_SECURITY_KEY_EXPIRE,
           name: payload.name,
         })
-        response.status(200).send(token)
+        response.format(200, token)
         return
       case 2:
         token = await auth.use('jwt').generate(auth.user!!, {
@@ -27,7 +27,7 @@ export default class SecurityKeysController {
           expiresIn: process.env.ONE_TIME_SECURITY_KEY_EXPIRE,
           name: payload.name,
         })
-        response.status(200).send(token)
+        response.format(200, token)
         break
     }
   }

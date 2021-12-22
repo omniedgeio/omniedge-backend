@@ -28,9 +28,9 @@ export default class AuthController {
     const payload = await request.validate({schema: authSchema, reporter: CustomReporter})
     const user = await User.create(payload)
     if (user.$isPersisted) {
-      response.status(201).send(user)
+      response.format(200, user)
     } else {
-      response.status(502)
+      response.format(502, "Fail to save user")
     }
   }
 
@@ -47,7 +47,7 @@ export default class AuthController {
     const token = await auth.attempt(payload.email, payload.password, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
-    response.status(200).send(token)
+    response.format(200, token)
   }
 
   public async loginWithSecurityKey({request, response, auth}: HttpContextContract) {
@@ -58,7 +58,7 @@ export default class AuthController {
     const token = await auth.use('jwt').attemptSecretKey(payload.key, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
-    response.status(200).send(token)
+    response.format(200, token)
   }
 
   public async loginWithGoogle({request, response, auth}: HttpContextContract) {
@@ -94,17 +94,14 @@ export default class AuthController {
       const token = await auth.use('jwt').generate(newGoogleUser, {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })
-      response.status(200).send(token)
+      response.format(200, token)
     } else {
       const token = await auth.use('jwt').generate(user, {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })
-      response.status(200).send(token)
+      response.format(200, token)
     }
-
-
   }
-
 
   private async verify(idToken: string): Promise<TokenPayload> {
     const googleClientId = process.env.GOOGLE_CLIENT_ID
