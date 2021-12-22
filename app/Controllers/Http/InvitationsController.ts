@@ -49,13 +49,13 @@ export default class InvitationsController {
       .whereNot("email", auth.user?.email as string)
       .whereIn("email", data.emails);
 
-    await virtualNetwork.related("invitations").createMany(
-      users.map((user) => ({
+    for (let user of users) {
+      await Invitation.firstOrCreate({
         invitedUserId: user.id,
         invitedByUserId: auth.user!.id,
         virtualNetworkId: virtualNetwork.id,
-      }))
-    );
+      });
+    }
 
     return response.format(200, "Invitations sent");
   }
