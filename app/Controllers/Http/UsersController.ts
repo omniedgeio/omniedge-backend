@@ -1,7 +1,9 @@
 import { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import { rules, schema } from "@ioc:Adonis/Core/Validator";
+import Device from "App/Models/Device";
 import User from "App/Models/User";
 import UserVirtualNetwork from "App/Models/UserVirtualNetwork";
+import VirtualNetworkDevice from "App/Models/VirtualNetworkDevice";
 import { UserRole } from "Contracts/enum";
 
 export default class UsersController {
@@ -77,6 +79,10 @@ export default class UsersController {
       return response.format(403, "You are not allowed to delete user");
     }
 
+    const deviceIds = await (
+      await Device.query().select("id").where("user_id", params.id)
+    ).map((d) => d.id);
+
     const user = await UserVirtualNetwork.query()
       .where("user_id", params.id)
       .where("virtual_network_id", data.virtual_network)
@@ -88,6 +94,11 @@ export default class UsersController {
 
     await user.delete();
 
-    return response.format(200, "User deleted");
+    await VirtualNetworkDevice.query()
+      .whereIn("device_id", deviceIds)
+      .where("virtual_network_id", data.virtual_network)
+      .delete();
+
+    return response.format(200, "User removed from virtual network.");
   }
 }
