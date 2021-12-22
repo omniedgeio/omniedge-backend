@@ -31,7 +31,6 @@
       "@adonisjs/lucid",
       "@adonisjs/auth",
       "@ivyxjc/adonis5-jwt",
-      "@adonisjs/ally",
       "adonis-lucid-filter"
     ]
   }

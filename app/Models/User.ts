@@ -38,7 +38,7 @@ export default class User extends compose(BaseModel, Filterable) {
   public emailVerifiedAt: DateTime | null;
 
   @column({ serializeAs: null })
-  public password: string | null;
+  public password?: string ;
 
   @column()
   public picture: string | null;
