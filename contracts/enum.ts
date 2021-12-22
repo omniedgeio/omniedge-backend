@@ -4,6 +4,11 @@ export enum UserStatus {
   Blocked = 3,
 }
 
+export enum AuthType{
+  Google = "google"
+}
+
+
 export enum UserRole {
   User = 1,
   Admin = 2,

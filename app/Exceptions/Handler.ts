@@ -15,9 +15,20 @@
 
 import Logger from '@ioc:Adonis/Core/Logger'
 import HttpExceptionHandler from '@ioc:Adonis/Core/HttpExceptionHandler'
+import {HttpContextContract} from "@ioc:Adonis/Core/HttpContext";
+import {err} from "pino-std-serializers";
 
 export default class ExceptionHandler extends HttpExceptionHandler {
-  constructor () {
+  constructor() {
     super(Logger)
+  }
+
+  async handle(error: any, ctx: HttpContextContract) {
+    await super.handle(error, ctx)
+    ctx.response.status(error.status).send({
+      code: error.code,
+      message: error.message,
+      errors: error.errors,
+    })
   }
 }
