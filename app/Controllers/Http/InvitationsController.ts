@@ -70,9 +70,12 @@ export default class InvitationsController {
     const virtualNetworkIds = virtualNetworks?.map((vn) => vn.id) || [];
 
     const invitations = await Invitation.query()
-      .whereIn("virtual_network_id", virtualNetworkIds)
-      .orWhere("invited_user_id", auth.user?.id as string)
+      .where((query) => {
+        query.whereIn("virtual_network_id", virtualNetworkIds);
+        query.orWhere("invited_user_id", auth.user?.id as string);
+      })
       .where("status", InvitationStatus.Pending)
+      .filter(request.qs())
       .preload("virtualNetwork", (query) => query.select("id", "name"))
       .preload("invited", (query) => query.select("id", "name", "email"))
       .preload("invitedBy", (query) => query.select("id", "name", "email"))

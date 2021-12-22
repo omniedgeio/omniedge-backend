@@ -1,3 +1,5 @@
+import { Filterable } from "@ioc:Adonis/Addons/LucidFilter";
+import { compose } from "@ioc:Adonis/Core/Helpers";
 import {
   BaseModel,
   beforeCreate,
@@ -8,10 +10,13 @@ import {
 import { DateTime } from "luxon";
 import { InvitationStatus } from "./../../contracts/enum";
 import { modelId } from "./../../utils/nanoid";
+import InvitationFilter from "./Filters/InvitationFilter";
 import User from "./User";
 import VirtualNetwork from "./VirtualNetwork";
 
-export default class Invitation extends BaseModel {
+export default class Invitation extends compose(BaseModel, Filterable) {
+  public static $filter = () => InvitationFilter;
+
   @column({ isPrimary: true })
   public id: string;
 
