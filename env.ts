@@ -26,9 +26,8 @@ export default Env.rules({
   PG_USER: Env.schema.string(),
   PG_PASSWORD: Env.schema.string.optional(),
   PG_DB_NAME: Env.schema.string(),
-  // @adonisjs/ally
+  // google auth
   GOOGLE_CLIENT_ID: Env.schema.string(),
-  GOOGLE_CLIENT_SECRET: Env.schema.string(),
 
   LOGIN_TOKEN_EXPIRE: Env.schema.string(),
   ONE_TIME_SECURITY_KEY_EXPIRE: Env.schema.string(),

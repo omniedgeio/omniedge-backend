@@ -13,9 +13,17 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  omniedge-adonis-pg-migration:
+    depends_on:
+      - omniedge-adonis-pg
+    build:
+      context: ../..
+      dockerfile: docker/local/pg-migration-Dockerfile
+
   omniedge-adonis:
     depends_on:
       - omniedge-adonis-pg
+      - omniedge-adonis-pg-migration
     build:
       context: ../..
       dockerfile: docker/local/Dockerfile
