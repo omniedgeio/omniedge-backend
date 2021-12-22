@@ -67,10 +67,7 @@ Route.group(() => {
     }).prefix("/invitations");
 
     Route.group(() => {
-      Route.post("/", "UsersController.create");
       Route.get("/", "UsersController.list");
-      Route.get("/:id", "UsersController.retrieve");
-      Route.put("/:id", "UsersController.update");
       Route.delete("/:id", "UsersController.delete");
     }).prefix("/users");
 

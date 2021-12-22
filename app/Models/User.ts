@@ -1,4 +1,6 @@
+import { Filterable } from "@ioc:Adonis/Addons/LucidFilter";
 import Hash from "@ioc:Adonis/Core/Hash";
+import { compose } from "@ioc:Adonis/Core/Helpers";
 import {
   BaseModel,
   beforeCreate,
@@ -13,13 +15,16 @@ import { DateTime } from "luxon";
 import { UserStatus } from "./../../contracts/enum";
 import { modelId } from "./../../utils/nanoid";
 import Device from "./Device";
+import UserFilter from "./Filters/UserFilter";
 import Identity from "./Identity";
 import Invitation from "./Invitation";
 import PasswordReset from "./PasswordReset";
 import SecurityKey from "./SecurityKey";
 import VirtualNetwork from "./VirtualNetwork";
 
-export default class User extends BaseModel {
+export default class User extends compose(BaseModel, Filterable) {
+  public static $filter = () => UserFilter;
+
   @column({ isPrimary: true })
   public id: string;
 
@@ -29,10 +34,10 @@ export default class User extends BaseModel {
   @column()
   public email: string;
 
-  @column()
+  @column({ serializeAs: null })
   public emailVerifiedAt: DateTime | null;
 
-  @column()
+  @column({ serializeAs: null })
   public password: string | null;
 
   @column()
@@ -84,5 +89,11 @@ export default class User extends BaseModel {
   @beforeCreate()
   public static async createID(model: User) {
     model.id = "usr_" + modelId();
+  }
+
+  public serializeExtras() {
+    return {
+      role: this.$extras.role,
+    };
   }
 }
