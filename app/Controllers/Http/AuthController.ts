@@ -7,9 +7,24 @@ import { AuthType, UserStatus } from 'Contracts/enum'
 import Identity from 'App/Models/Identity'
 import Database from '@ioc:Adonis/Lucid/Database'
 import Logger from '@ioc:Adonis/Core/Logger'
-import { generateToken } from '../../../utils/jwt'
+import { generateToken, verifyToken } from '../../../utils/jwt'
+import Mail from '@ioc:Adonis/Addons/Mail'
+import omniedgeConfig from 'Contracts/omniedge'
+import { JWTCustomPayload } from '@ioc:Adonis/Addons/Jwt'
 
 export default class AuthController {
+  private static activateEndpoint = '/auth/register/activate?token='
+
+  /**
+   * happy path: user register -> [inactive user] -> send email -> user click the email -> [active user]
+   * 1. if user register with the same email, it will be rejected with the following rules
+   *  a. if user's status is inactive, redirect the page in which user can resend verify email
+   *  b. if user's status is active, tell user that the email is already used, and redirect to login page
+   * 2. if fail to send the email, or user does not click the verify email
+   *    user still log in to one special page to activate the account by the way resending verify email
+   * @param request
+   * @param response
+   */
   public async register({ request, response }: HttpContextContract) {
     const authSchema = schema.create({
       email: schema.string({ trim: true }, [
@@ -29,13 +44,98 @@ export default class AuthController {
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
     const user = new User()
     user.email = payload.email
+    user.name = payload.name
     user.password = payload.password
+    user.status = UserStatus.Inactive
     const resUser = await User.create(user)
-    if (user.$isPersisted) {
+    response.status(200)
+    if (resUser.$isPersisted) {
       response.format(200, resUser)
     } else {
       response.format(502, 'Fail to save user')
     }
+    const emailToken = await this.generateEmailToken(user.email)
+    await Mail.use().sendLater((message) => {
+        message.from('no-reply@ivyxjc.com')
+          // todo change email address
+          .to('ivyxjc1994@hotmail.com')
+          .subject('Welcome to Omniedge')
+          .htmlView('emails/register', {
+            name: user.name,
+            uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
+          })
+      },
+    )
+  }
+
+  public async resendVerifyEmail({ request, response }: HttpContextContract) {
+    const requestSchema = schema.create({
+      email: schema.string({ trim: true }, [
+        rules.email({
+          sanitize: {
+            lowerCase: true,
+          },
+        }),
+      ]),
+    })
+    const payload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
+    const user = await User.findByOrFail('email', payload.email)
+    const emailToken = await this.generateEmailToken(user.email!!)
+    await Mail.use().send((message) => {
+        message.from('no-reply@ivyxjc.com')
+          // todo change email address
+          .to('ivyxjc1994@hotmail.com')
+          .subject('Welcome to Omniedge')
+          .htmlView('emails/register', {
+            name: user.name,
+            uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
+          })
+      },
+    )
+    response.format(200, '')
+  }
+
+  /**
+   * happy path: check user status=2 -> update user status=2
+   * 1. if jwt payload is expired or invalid, return 400
+   * 2. if fail to find the user, return 400
+   * 3. if user blocked, return 403
+   * 4. if user is active, return 400
+   * 5. if user is inactive, return 200
+   * @param request
+   * @param response
+   */
+  public async activateAccount({ request, response }: HttpContextContract) {
+    const requestSchema = schema.create({
+      token: schema.string({ trim: true }),
+    })
+    const requestPayload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
+    let jwtPayload: JWTCustomPayload | undefined
+    try {
+      jwtPayload = await this.verifyEmailToken(requestPayload.token)
+    } catch (e) {
+      Logger.error('Invalid token: jwt token is %o', jwtPayload)
+      response.format(400, e.message)
+      return
+    }
+    if (!jwtPayload!!.data!!.email) {
+      Logger.error('Invalid JWT payload: missing email, payload is %o', jwtPayload)
+      response.format(400, 'Invalid JWT payload: missing email')
+      return
+    }
+    const user = await User.findByOrFail('email', jwtPayload.data!!.email)
+    switch (user.status) {
+      case UserStatus.Active:
+        response.format(400, 'User is already active')
+        return
+      case UserStatus.Blocked:
+        response.format(403, 'User is blocked')
+        return
+      default:
+    }
+    user.status = UserStatus.Active
+    const resUser = user.save()
+    response.format(200, resUser)
   }
 
   public async loginWithPassword({ request, response, auth }: HttpContextContract) {
@@ -51,7 +151,6 @@ export default class AuthController {
     const token = await auth.attempt(payload.email, payload.password, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
-    Logger.info('jwt token %s', await this.generate(payload.email))
     response.format(200, token)
   }
 
@@ -71,7 +170,7 @@ export default class AuthController {
       id_token: schema.string({ trim: true }),
     })
     const requestPayload = await request.validate({ schema: authSchema, reporter: CustomReporter })
-    const googlePayload = await this.verify(requestPayload.id_token)
+    const googlePayload = await this.verifyGoogleIdToken(requestPayload.id_token)
     const user = await User.findBy('email', googlePayload?.email)
     if (!user) {
       const newGoogleUser = new User()
@@ -108,7 +207,7 @@ export default class AuthController {
     }
   }
 
-  private async verify(idToken: string): Promise<TokenPayload> {
+  private async verifyGoogleIdToken(idToken: string): Promise<TokenPayload> {
     const googleClientId = process.env.GOOGLE_CLIENT_ID
     const client = new OAuth2Client(googleClientId)
     const ticket = await client.verifyIdToken({
@@ -124,7 +223,11 @@ export default class AuthController {
     }
   }
 
-  private async generate(email: string): Promise<string> {
-    return generateToken('2h', { email: email })
+  private async generateEmailToken(email: string): Promise<string> {
+    return generateToken('1h', { email: email }, omniedgeConfig.key.AUTH_EMAIL_PRIVATE_KEY)
+  }
+
+  private async verifyEmailToken(token: string): Promise<JWTCustomPayload> {
+    return verifyToken(token, omniedgeConfig.key.AUTH_EMAIL_PRIVATE_KEY)
   }
 }

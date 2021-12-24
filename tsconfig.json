@@ -32,7 +32,8 @@
       "@adonisjs/auth",
       "@ivyxjc/adonis5-jwt",
       "adonis-lucid-filter",
-      "@adonisjs/mail"
+      "@adonisjs/mail",
+      "@adonisjs/view"
     ]
   }
 }

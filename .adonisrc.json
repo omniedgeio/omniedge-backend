@@ -17,7 +17,14 @@
   },
   "preloads": [
     "./start/routes",
-    "./start/kernel"
+    "./start/kernel",
+    {
+      "file": "./start/events",
+      "environment": [
+        "web",
+        "console"
+      ]
+    }
   ],
   "providers": [
     "./providers/AppProvider",
@@ -26,9 +33,16 @@
     "@adonisjs/auth",
     "@ivyxjc/adonis5-jwt",
     "adonis-lucid-filter",
-    "@adonisjs/mail"
+    "@adonisjs/mail",
+    "@adonisjs/view"
   ],
   "aceProviders": [
     "@adonisjs/repl"
+  ],
+  "metaFiles": [
+    {
+      "pattern": "resources/views/**/*.edge",
+      "reloadServer": false
+    }
   ]
 }
