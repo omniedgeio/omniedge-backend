@@ -1,0 +1,463 @@
+openapi: 3.0.2
+info:
+  title: API Title
+  version: '1.0'
+servers:
+  - url: 'https://127.0.0.1/3333/api'
+tags:
+  - Auth
+paths:
+  /auth/register:
+    parameters: [ ]
+    post:
+      summary: ''
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: E_VALIDATION_FAILED
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: E_VALIDATION_FAILED
+                  message:
+                    type: string
+                    example: Fail to save user
+                  errors:
+                    type: object
+                required:
+                  - code
+                  - message
+                  - errors
+              examples:
+                email-exists:
+                  value:
+                    code: E_VALIDATION_FAILED
+                    message: 'E_VALIDATION_FAILED: [object Object]'
+                    errors:
+                      email:
+                        unique: unique validation failure
+        '502':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: E_SAVE_USER
+                  message:
+                    type: string
+                    example: Fail to save user
+                required:
+                  - code
+                  - message
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                passowrd:
+                  type: string
+              required:
+                - name
+                - email
+                - passowrd
+            examples:
+              john:
+                value:
+                  name: test
+                  email: john@gmail.com
+                  password: JohnDoe1234$$
+  /auth/resendVerifyEmail:
+    parameters: [ ]
+    post:
+      summary: ''
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                nullable: true
+        '500':
+          description: Internel Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: F_EMAIL_SEND
+                  message:
+                    type: string
+                    example: Fail to send verify email
+                required:
+                  - code
+                  - message
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                passowrd:
+                  type: string
+              required:
+                - email
+            examples:
+              example-1:
+                value:
+                  email: user@example.com
+  /auth/activateAccount:
+    parameters: [ ]
+    post:
+      summary: ''
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: E_TOKEN_INVALID
+                  message:
+                    type: string
+                    example: ...
+                required:
+                  - code
+                  - message
+              examples:
+                userExisted:
+                  value:
+                    code: E_USER_EXISTED
+                    message: User is already active
+                invalidToken:
+                  value:
+                    code: E_TOKEN_INVALID
+                    message: Invalid JWT payload
+                expiredToken:
+                  value:
+                    code: E_TOKEN_EXPIRED
+                    message: Expired JWT token
+        '403':
+          description: User Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: E_TOKEN_EXPIRED
+                  message:
+                    type: string
+                    example: ...
+                required:
+                  - code
+                  - message
+              examples:
+                userBlocked:
+                  value:
+                    code: E_TOKEN_EXPIRED
+                    message: User is blocked
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                passowrd:
+                  type: string
+              required:
+                - name
+                - email
+                - passowrd
+            examples:
+              example-1:
+                value:
+                  email: user@example.com
+        description: ''
+  /auth/loginWithPassword:
+    parameters: [ ]
+    post:
+      summary: ''
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - code
+                  - message
+              examples:
+                emailPasswordNotMatch:
+                  value:
+                    code: E_EMAIL_PASSWORD_NOT_MATCH
+                    message: ''
+        '403':
+          description: Forbidden User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - code
+                  - message
+              examples:
+                userBlocked:
+                  value:
+                    code: E_USER_BLOCKED
+                    message: User is blocked
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+  /auth/loginWithSecurityKey:
+    parameters: [ ]
+    post:
+      summary: ''
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: Invalid Security Key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - code
+                  - message
+              examples:
+                invalidSecurityKey:
+                  value:
+                    code: ERR_JWS_SIGNATURE_VERIFICATION_FAILED
+                    message: ignature verification failed
+        '403':
+          description: Forbidden User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                required:
+                  - code
+                  - message
+              examples:
+                userBlocked:
+                  value:
+                    code: E_USER_BLOCKED
+                    message: User is blocked
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+              required:
+                - key
+  /auth/loginWithGoogle:
+    parameters: [ ]
+    post:
+      summary: ''
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: Fail to login with google
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: E_GOOGLE_AUTH_FAIL
+                  message:
+                    type: string
+                    example: The google id_token may be invalid
+                required:
+                  - code
+                  - message
+        '403':
+          description: Forbidden User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                required:
+                  - code
+                  - message
+              examples:
+                userBlocked:
+                  value:
+                    code: E_USER_BLOCKED
+                    message: User is blocked
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_token:
+                  type: string
+              required:
+                - id_token
+components:
+  schemas:
+    User:
+      title: User
+      type: object
+      description: ''
+      example:
+        id: usr_MHu9BAhD8znNTYEoc1pA
+        email: john@gmail.com
+        name: test
+        status: '2,'
+        created_at: '2021-12-26T12:00:07.094+08:00'
+        updated_at: '2021-12-26T12:00:07.095+08:00'
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the given user.
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          format: date
+          example: '1997-10-31'
+        created_at:
+          type: string
+          description: time
+          example: '2021-12-25T22:48:35.641+08:00'
+        updated_at:
+          type: string
+          format: date
+          description: time
+          example: '2021-12-25T22:48:35.641+08:00'
+      required:
+        - id
+        - email
+        - name
+        - created_at
+        - updated_at
+    Token:
+      title: Token
+      type: object
+      properties:
+        type:
+          type: string
+        token:
+          type: string
+        refresh_token:
+          type: string
+        expires_at:
+          type: string
+      required:
+        - type
+        - token
+        - refresh_token
+        - expires_at

@@ -11,7 +11,10 @@ import { generateToken, verifyToken } from '../../../utils/jwt'
 import Mail from '@ioc:Adonis/Addons/Mail'
 import omniedgeConfig from 'Contracts/omniedge'
 import { JWTCustomPayload } from '@ioc:Adonis/Addons/Jwt'
+import { ErrorCode } from '../../../utils/constant'
+import AuthException from 'App/Exceptions/AuthException'
 
+// todo all login check user status!=blocked
 export default class AuthController {
   private static activateEndpoint = '/auth/register/activate?token='
 
@@ -52,7 +55,7 @@ export default class AuthController {
     if (resUser.$isPersisted) {
       response.format(200, resUser)
     } else {
-      response.format(502, 'Fail to save user')
+      response.formatError(502, ErrorCode.auth.E_SAVE_USER, 'Fail to save user')
     }
     const emailToken = await this.generateEmailToken(user.email)
     await Mail.use().sendLater((message) => {
@@ -81,18 +84,23 @@ export default class AuthController {
     const payload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
     const user = await User.findByOrFail('email', payload.email)
     const emailToken = await this.generateEmailToken(user.email!!)
-    await Mail.use().send((message) => {
-        message.from('no-reply@ivyxjc.com')
-          // todo change email address
-          .to('ivyxjc1994@hotmail.com')
-          .subject('Welcome to Omniedge')
-          .htmlView('emails/register', {
-            name: user.name,
-            uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
-          })
-      },
-    )
-    response.format(200, '')
+    try {
+      await Mail.use().send((message) => {
+          message.from('no-reply@ivyxjc.com')
+            .to('ivyxjc1993@hotmail.com')
+            .subject('Welcom to Omniedge')
+            .htmlView('emails/register', {
+              name: user.name,
+              uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
+            })
+        },
+      )
+      response.format(200, '')
+    } catch (e) {
+      Logger.fatal('fail to send email')
+      response.formatError(500, ErrorCode.auth.F_EMAIL_SEND, 'Fail to send verify email')
+    }
+
   }
 
   /**
@@ -111,25 +119,26 @@ export default class AuthController {
     })
     const requestPayload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
     let jwtPayload: JWTCustomPayload | undefined
+
     try {
       jwtPayload = await this.verifyEmailToken(requestPayload.token)
     } catch (e) {
       Logger.error('Invalid token: jwt token is %o', jwtPayload)
-      response.format(400, e.message)
+      response.formatError(400, ErrorCode.auth.E_TOKEN_INVALID, e.message)
       return
     }
     if (!jwtPayload!!.data!!.email) {
       Logger.error('Invalid JWT payload: missing email, payload is %o', jwtPayload)
-      response.format(400, 'Invalid JWT payload: missing email')
+      response.formatError(400, ErrorCode.auth.E_TOKEN_INVALID, 'Invalid JWT payload: missing email')
       return
     }
     const user = await User.findByOrFail('email', jwtPayload.data!!.email)
     switch (user.status) {
       case UserStatus.Active:
-        response.format(400, 'User is already active')
+        response.formatError(400, ErrorCode.auth.E_USER_EXISTED, 'User is already active')
         return
       case UserStatus.Blocked:
-        response.format(403, 'User is blocked')
+        response.formatError(403, ErrorCode.auth.E_USER_BLOCKED, 'User is blocked')
         return
       default:
     }
@@ -159,18 +168,45 @@ export default class AuthController {
       key: schema.string({ trim: true }),
     })
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
-    const token = await auth.use('jwt').attemptSecretKey(payload.key, {
-      expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
-    })
-    response.format(200, token)
+    try {
+      const token = await auth.use('jwt').attemptSecretKey(payload.key, {
+        expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
+      })
+      response.format(200, token)
+    } catch (e) {
+      response.formatError(401, e.code, e.message)
+    }
+
   }
 
+  /**
+   * if google payload's email exists in database
+   * @param request
+   * @param response
+   * @param auth
+   */
   public async loginWithGoogle({ request, response, auth }: HttpContextContract) {
     const authSchema = schema.create({
       id_token: schema.string({ trim: true }),
     })
     const requestPayload = await request.validate({ schema: authSchema, reporter: CustomReporter })
     const googlePayload = await this.verifyGoogleIdToken(requestPayload.id_token)
+    if (!googlePayload) {
+      response.formatError(401, ErrorCode.auth.E_GOOGLE_AUTH_FAIL, 'The google id_token may be invalid')
+    }
+    const googlePayloadSub = googlePayload?.sub!!
+
+    const identity = await Identity.findBy('providerUserId', googlePayloadSub)
+
+    // user has logged in the system before
+    if (identity) {
+      const user = await User.findOrFail(identity.userId)
+      const token = await auth.use('jwt').generate(user, {
+        expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
+      })
+      response.format(200, token)
+      return
+    }
     const user = await User.findBy('email', googlePayload?.email)
     if (!user) {
       const newGoogleUser = new User()
@@ -200,10 +236,7 @@ export default class AuthController {
       })
       response.format(200, token)
     } else {
-      const token = await auth.use('jwt').generate(user, {
-        expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
-      })
-      response.format(200, token)
+      response.formatError(403, ErrorCode.auth.E_GOOGLE_AUTH_FAIL, 'The email which your google account binds is used in the system')
     }
   }
 
@@ -215,9 +248,12 @@ export default class AuthController {
       audience: googleClientId,
     })
     const payload = ticket.getPayload()
-    // todo check payload and payload email
     if (payload == undefined) {
-      throw new Error('Invalid token')
+      throw new AuthException(401, ErrorCode.auth.E_GOOGLE_AUTH_FAIL, 'Fail to get Google payload', null)
+    } else if (!payload.email) {
+      throw new AuthException(401, ErrorCode.auth.E_GOOGLE_AUTH_FAIL, 'Google payload does not have attribute: email', null)
+    } else if (!payload.sub) {
+      throw new AuthException(401, ErrorCode.auth.E_GOOGLE_AUTH_FAIL, 'Google payload does not have attribute: sub', null)
     } else {
       return payload
     }
