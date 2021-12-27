@@ -8,6 +8,7 @@ const omniedgeConfig = {
   },
   mail: {
     senderAddress: Env.get('SES_SENDER_ADDRESS') as string,
+    senderName: Env.get('SES_SENDER_NAME') as string,
     baseUrl: Env.get('EMAIL_BASE_URL') as string,
   },
   rules: {

@@ -59,9 +59,9 @@ export default class AuthController {
     }
     const emailToken = await this.generateEmailToken(user.email)
     await Mail.use().sendLater((message) => {
-        message.from('no-reply@ivyxjc.com')
+        message.from(omniedgeConfig.mail.senderAddress)
           // todo change email address
-          .to('ivyxjc1994@hotmail.com')
+          .to(payload.email)
           .subject('Welcome to Omniedge')
           .htmlView('emails/register', {
             name: user.name,
@@ -86,9 +86,9 @@ export default class AuthController {
     const emailToken = await this.generateEmailToken(user.email!!)
     try {
       await Mail.use().send((message) => {
-          message.from('no-reply@ivyxjc.com')
-            .to('ivyxjc1993@hotmail.com')
-            .subject('Welcom to Omniedge')
+          message.from(omniedgeConfig.mail.senderAddress, omniedgeConfig.mail.senderName)
+            .to(payload.email)
+            .subject('Welcome to Omniedge')
             .htmlView('emails/register', {
               name: user.name,
               uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
