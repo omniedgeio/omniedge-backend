@@ -33,17 +33,17 @@ Route.group(() => {
       '/reset-password/verify',
       'AuthController.resetPasswordWithVerification',
     )
-
     // Features
     Route.post('/verify-email', 'AuthController.verifyEmail')
   }).prefix('/auth')
 
   Route.group(() => {
     Route.group(() => {
-      Route.get('/', 'ProfileController.index')
-      Route.put('/', 'ProfileController.update')
-      Route.put('/change-password', 'ProfileController.changePassword')
+      Route.get('/', 'ProfilesController.index')
+      Route.put('/', 'ProfilesController.update')
+      Route.put('/change-password', 'ProfilesController.changePassword')
     }).prefix('/profile')
+      .middleware('auth')
 
     Route.group(() => {
       Route.post('/', 'VirtualNetworksController.create')

@@ -12,6 +12,7 @@ const omniedgeConfig = {
   },
   rules: {
     nameRules: [rules.minLength(1), rules.maxLength(60)],
+    passwordRules: [rules.minLength(8), rules.maxLength(32)],
   },
 }
 

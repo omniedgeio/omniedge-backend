@@ -405,6 +405,154 @@ paths:
                   type: string
               required:
                 - id_token
+  /profile:
+    parameters: [ ]
+    get:
+      summary: ''
+      description: ''
+      tags:
+        - Profile
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithIdentities'
+        '401':
+          description: Not Authorized to get the profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: E_NEED_AUTHORIZATION
+                  message:
+                    type: string
+                    example: You should login in before retrieve the profile
+                required:
+                  - code
+                  - message
+        '403':
+          description: Forbidden User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                required:
+                  - code
+                  - message
+              examples:
+                userBlocked:
+                  value:
+                    code: E_USER_BLOCKED
+                    message: User is blocked
+    put:
+      summary: ''
+      description: ''
+      tags:
+        - Profile
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Not Authorized to get the profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: E_UNAUTHORIZED_ACCESS
+                  message:
+                    type: string
+                    example: You should login in before retrieve the profile
+                required:
+                  - code
+                  - message
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+  /profile/change-password:
+    parameters: [ ]
+    put:
+      summary: ''
+      description: ''
+      tags:
+        - Profile
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                example-1:
+                  value:
+                    id: usr_MHu9BAhD8znNTYEoc1pA
+                    email: john@gmail.com
+                    name: test
+                    status: '2,'
+                    created_at: '2021-12-26T12:00:07.094+08:00'
+                    updated_at: '2021-12-26T12:00:07.095+08:00'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: E_UNAUTHORIZED_ACCESS
+                  message:
+                    type: string
+                    example: You should login in before retrieve the profile
+                required:
+                  - code
+                  - message
+              examples:
+                new-password-same:
+                  value:
+                    code: E_NEW_PASSWORD_SAME
+                    message: New password is same as old password
+            application/xml:
+              schema:
+                type: object
+                properties:
+                  '':
+                    type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                old_password:
+                  type: string
+                password:
+                  type: string
+              required:
+                - old_password
+                - password
 components:
   schemas:
     User:
@@ -429,6 +577,10 @@ components:
           type: string
           format: date
           example: '1997-10-31'
+        status:
+          type: integer
+        picture:
+          type: string
         created_at:
           type: string
           description: time
@@ -442,6 +594,7 @@ components:
         - id
         - email
         - name
+        - status
         - created_at
         - updated_at
     Token:
@@ -461,3 +614,55 @@ components:
         - token
         - refresh_token
         - expires_at
+    UserWithIdentities:
+      title: UserWithIdentities
+      type: object
+      description: ''
+      example:
+        id: usr_MHu9BAhD8znNTYEoc1pA
+        email: john@gmail.com
+        name: test
+        status: '2,'
+        created_at: '2021-12-26T12:00:07.094+08:00'
+        updated_at: '2021-12-26T12:00:07.095+08:00'
+        identities:
+          - id: '1'
+            provider: google
+            provider_user_id: '104940522608936261238'
+            metadata: object
+            created_at: '2021-12-27T13:03:06.309+08:00'
+            updated_at: '2021-12-27T13:03:06.309+08:00'
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the given user.
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          format: date
+          example: '1997-10-31'
+        status:
+          type: integer
+        picture:
+          type: string
+        identities:
+          type: array
+        created_at:
+          type: string
+          description: time
+          example: '2021-12-25T22:48:35.641+08:00'
+        updated_at:
+          type: string
+          format: date
+          description: time
+          example: '2021-12-25T22:48:35.641+08:00'
+      required:
+        - id
+        - email
+        - name
+        - status
+        - created_at
+        - updated_at
+        - identities
