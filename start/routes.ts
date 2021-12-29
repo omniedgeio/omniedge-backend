@@ -68,6 +68,12 @@ Route.group(() => {
     }).prefix('/virtual-networks')
 
     Route.group(() => {
+      Route.post('/', 'InvitationsController.create')
+      Route.get('/', 'InvitationsController.list')
+      Route.delete('/:invitation_id', 'InvitationsController.delete')
+    }).prefix('/invitations')
+
+    Route.group(() => {
       Route.post('/', 'DevicesController.register')
       Route.get('/', 'DevicesController.list')
       Route.get('/:id', 'DevicesController.retrieve')
