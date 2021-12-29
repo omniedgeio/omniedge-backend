@@ -1,5 +1,5 @@
-import { Filterable } from "@ioc:Adonis/Addons/LucidFilter";
-import { compose } from "@ioc:Adonis/Core/Helpers";
+import { Filterable } from '@ioc:Adonis/Addons/LucidFilter'
+import { compose } from '@ioc:Adonis/Core/Helpers'
 import {
   BaseModel,
   beforeCreate,
@@ -8,54 +8,55 @@ import {
   column,
   ManyToMany,
   manyToMany,
-} from "@ioc:Adonis/Lucid/Orm";
-import { DateTime } from "luxon";
-import { modelId } from "./../../utils/nanoid";
-import DeviceFilter from "./Filters/DeviceFilter";
-import User from "./User";
-import VirtualNetwork from "./VirtualNetwork";
+} from '@ioc:Adonis/Lucid/Orm'
+import { DateTime } from 'luxon'
+import { modelId } from './../../utils/nanoid'
+import DeviceFilter from './Filters/DeviceFilter'
+import User from './User'
+import VirtualNetwork from './VirtualNetwork'
 
 export default class Device extends compose(BaseModel, Filterable) {
-  public static $filter = () => DeviceFilter;
+  public static $filter = () => DeviceFilter
 
   @column({ isPrimary: true })
-  public id: string;
+  public id: string
 
   @column({ serializeAs: null })
-  public userId: string;
+  public userId: string
 
   @column()
-  public hardwareId: string;
+  public hardwareId: string
 
   @column()
-  public platform: string;
+  public platform: string
 
   @column()
-  public name: string;
+  public name: string
 
   @belongsTo(() => User)
-  public user: BelongsTo<typeof User>;
+  public user: BelongsTo<typeof User>
 
   @manyToMany(() => VirtualNetwork, {
-    pivotTable: "virtual_network_device",
-    pivotColumns: ["virtual_ip"],
+    pivotTable: 'virtual_network_device',
+    pivotColumns: ['virtual_ip', 'last_seen'],
   })
-  public virtualNetworks: ManyToMany<typeof VirtualNetwork>;
+  public virtualNetworks: ManyToMany<typeof VirtualNetwork>
 
   @column.dateTime({ autoCreate: true })
-  public createdAt: DateTime;
+  public createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  public updatedAt: DateTime;
+  public updatedAt: DateTime
 
   @beforeCreate()
   public static async createID(model: Device) {
-    model.id = "dev_" + modelId();
+    model.id = 'dev_' + modelId()
   }
 
   public serializeExtras() {
     return {
       virtual_ip: this.$extras?.pivot_virtual_ip,
-    };
+      last_seen: this.$extras?.pivot_last_seen,
+    }
   }
 }

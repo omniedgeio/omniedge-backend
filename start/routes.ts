@@ -29,21 +29,18 @@ Route.group(() => {
     Route.post('/login/password', 'AuthController.loginWithPassword')
     Route.post('/login/security-key', 'AuthController.loginWithSecurityKey')
     Route.post('/reset-password/code', 'AuthController.resetPasswordWithCode')
-    Route.post(
-      '/reset-password/verify',
-      'AuthController.resetPasswordWithVerification',
-    )
+    Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
+
     // Features
     Route.post('/verify-email', 'AuthController.verifyEmail')
   }).prefix('/auth')
 
   Route.group(() => {
     Route.group(() => {
-      Route.get('/', 'ProfilesController.index')
-      Route.put('/', 'ProfilesController.update')
-      Route.put('/change-password', 'ProfilesController.changePassword')
+      Route.get('/', 'ProfileController.index')
+      Route.put('/', 'ProfileController.update')
+      Route.put('/change-password', 'ProfileController.changePassword')
     }).prefix('/profile')
-      .middleware('auth')
 
     Route.group(() => {
       Route.post('/', 'VirtualNetworksController.create')
@@ -51,6 +48,23 @@ Route.group(() => {
       Route.get('/:id', 'VirtualNetworksController.retrieve')
       Route.put('/:id', 'VirtualNetworksController.update')
       Route.delete('/:id', 'VirtualNetworksController.delete')
+
+      Route.group(() => {
+        Route.get('/', 'VirtualNetworksController.listUsers')
+        Route.put('/:user_id', 'VirtualNetworksController.updateUser')
+        Route.delete('/:user_id', 'VirtualNetworksController.deleteUser')
+      }).prefix('/:id/users')
+
+      Route.group(() => {
+        Route.get('/', 'VirtualNetworksController.listDevices')
+        Route.delete('/:device_id', 'VirtualNetworksController.deleteDevice')
+      }).prefix('/:id/devices')
+
+      Route.group(() => {
+        Route.post('/', 'VirtualNetworksController.createInvitation')
+        Route.get('/', 'VirtualNetworksController.listInvitations')
+        Route.delete('/:invitation_id', 'VirtualNetworksController.deleteInvitation')
+      }).prefix('/:id/invitations')
     }).prefix('/virtual-networks')
 
     Route.group(() => {
@@ -59,19 +73,11 @@ Route.group(() => {
       Route.get('/:id', 'DevicesController.retrieve')
       Route.put('/:id', 'DevicesController.update')
       Route.delete('/:id', 'DevicesController.delete')
+
+      Route.group(() => {
+        Route.get('/', 'DevicesController.listVirtualNetworks')
+      }).prefix('/:id/virtual-networks')
     }).prefix('/devices')
-
-    Route.group(() => {
-      Route.post('/', 'InvitationsController.create')
-      Route.get('/', 'InvitationsController.list')
-      Route.put('/:id', 'InvitationsController.update')
-      Route.delete('/:id', 'InvitationsController.delete')
-    }).prefix('/invitations')
-
-    Route.group(() => {
-      Route.get('/', 'UsersController.list')
-      Route.delete('/:id', 'UsersController.delete')
-    }).prefix('/users')
 
     Route.group(() => {
       Route.post('/', 'SecurityKeysController.create')
@@ -79,5 +85,9 @@ Route.group(() => {
       Route.put('/:id', 'SecurityKeysController.update')
       Route.delete('/:id', 'SecurityKeysController.delete')
     }).prefix('/security-keys')
+
+    Route.group(() => {
+      Route.get('/', 'ServersController.list')
+    }).prefix('servers')
   }).middleware('auth')
 }).prefix('/api')

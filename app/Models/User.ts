@@ -1,6 +1,6 @@
-import { Filterable } from "@ioc:Adonis/Addons/LucidFilter";
-import Hash from "@ioc:Adonis/Core/Hash";
-import { compose } from "@ioc:Adonis/Core/Helpers";
+import { Filterable } from '@ioc:Adonis/Addons/LucidFilter'
+import Hash from '@ioc:Adonis/Core/Hash'
+import { compose } from '@ioc:Adonis/Core/Helpers'
 import {
   BaseModel,
   beforeCreate,
@@ -10,90 +10,101 @@ import {
   hasMany,
   ManyToMany,
   manyToMany,
-} from "@ioc:Adonis/Lucid/Orm";
-import { DateTime } from "luxon";
-import { UserStatus } from "./../../contracts/enum";
-import { modelId } from "./../../utils/nanoid";
-import Device from "./Device";
-import UserFilter from "./Filters/UserFilter";
-import Identity from "./Identity";
-import Invitation from "./Invitation";
-import PasswordReset from "./PasswordReset";
-import SecurityKey from "./SecurityKey";
-import VirtualNetwork from "./VirtualNetwork";
+} from '@ioc:Adonis/Lucid/Orm'
+import { DateTime } from 'luxon'
+import { UserRole, UserStatus } from './../../contracts/enum'
+import { modelId } from './../../utils/nanoid'
+import Device from './Device'
+import UserFilter from './Filters/UserFilter'
+import Identity from './Identity'
+import Invitation from './Invitation'
+import PasswordReset from './PasswordReset'
+import SecurityKey from './SecurityKey'
+import UserVirtualNetwork from './UserVirtualNetwork'
+import VirtualNetwork from './VirtualNetwork'
 
 export default class User extends compose(BaseModel, Filterable) {
-  public static $filter = () => UserFilter;
+  public static $filter = () => UserFilter
 
   @column({ isPrimary: true })
-  public id: string;
+  public id: string
 
   @column()
-  public name: string;
+  public name: string
 
   @column()
-  public email: string;
+  public email: string
 
   @column({ serializeAs: null })
-  public emailVerifiedAt: DateTime | null;
+  public emailVerifiedAt: DateTime | null
 
   @column({ serializeAs: null })
-  public password?: string ;
+  public password?: string
 
   @column()
-  public picture: string | null;
+  public picture: string | null
 
   @column()
-  public lastLoginIp: string | null;
+  public lastLoginIp: string | null
 
   @column()
-  public lastLoginAt: DateTime | null;
+  public lastLoginAt: DateTime | null
 
   @column()
-  public status: UserStatus;
+  public status: UserStatus
 
   @hasMany(() => Device)
-  public devices: HasMany<typeof Device>;
+  public devices: HasMany<typeof Device>
 
   @hasMany(() => Identity)
-  public identities: HasMany<typeof Identity>;
+  public identities: HasMany<typeof Identity>
 
   @manyToMany(() => VirtualNetwork, {
-    pivotTable: "user_virtual_network",
-    pivotColumns: ["role"],
+    pivotTable: 'user_virtual_network',
+    pivotColumns: ['role'],
   })
-  public virtualNetworks: ManyToMany<typeof VirtualNetwork>;
+  public virtualNetworks: ManyToMany<typeof VirtualNetwork>
 
   @hasMany(() => SecurityKey)
-  public securityKeys: HasMany<typeof SecurityKey>;
+  public securityKeys: HasMany<typeof SecurityKey>
 
   @hasMany(() => Invitation)
-  public invitations: HasMany<typeof Invitation>;
+  public invitations: HasMany<typeof Invitation>
 
   @hasMany(() => PasswordReset)
-  public passwordResets: HasMany<typeof PasswordReset>;
+  public passwordResets: HasMany<typeof PasswordReset>
 
   @column.dateTime({ autoCreate: true })
-  public createdAt: DateTime;
+  public createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  public updatedAt: DateTime;
+  public updatedAt: DateTime
 
   @beforeSave()
   public static async hashPassword(user: User) {
     if (user.$dirty.password) {
-      user.password = await Hash.make(user.password as string);
+      user.password = await Hash.make(user.password as string)
     }
   }
 
   @beforeCreate()
   public static async createID(model: User) {
-    model.id = "usr_" + modelId();
+    model.id = 'usr_' + modelId()
   }
 
   public serializeExtras() {
     return {
-      role: this.$extras.role,
-    };
+      role: this.$extras.pivot_role,
+    }
+  }
+
+  public async isAdminOf(virtualNetwork: VirtualNetwork) {
+    const userVirtualNetwork = await UserVirtualNetwork.query()
+      .where('user_id', this.id)
+      .where('virtual_network_id', virtualNetwork.id)
+      .where('role', UserRole.Admin)
+      .first()
+
+    return !!userVirtualNetwork
   }
 }
