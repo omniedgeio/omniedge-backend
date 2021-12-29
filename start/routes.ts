@@ -79,10 +79,6 @@ Route.group(() => {
       Route.get('/:id', 'DevicesController.retrieve')
       Route.put('/:id', 'DevicesController.update')
       Route.delete('/:id', 'DevicesController.delete')
-
-      Route.group(() => {
-        Route.get('/', 'DevicesController.listVirtualNetworks')
-      }).prefix('/:id/virtual-networks')
     }).prefix('/devices')
 
     Route.group(() => {
