@@ -26,6 +26,14 @@ services:
       - omniedge-adonis-pg-migration
     build:
       context: ../..
-      dockerfile: docker/local/Dockerfile
+      dockerfile: docker/Dockerfile
+    environment:
+      - PG_HOST=omniedge-adonis-pg
+      - PG_PORT=5432
+      - PG_USER=postgres
+      - PG_PASSWORD=postgres
+      - PG_DB_NAME=postgres
+    env_file:
+      - ./.env
     ports:
       - "53333:3333"

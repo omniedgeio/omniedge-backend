@@ -1,4 +1,4 @@
-FROM public.ecr.aws/u2c0c8c5/node:16-alpine as builder
+FROM public.ecr.aws/docker/library/node:16-alpine as builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -9,9 +9,8 @@ RUN npm run build
 
 WORKDIR /app/build/
 RUN npm ci --production
-COPY .env.docker.local ./.env
 
-FROM public.ecr.aws/u2c0c8c5/node:16-alpine
+FROM public.ecr.aws/docker/library/node:16-alpine
 
 WORKDIR /app
 

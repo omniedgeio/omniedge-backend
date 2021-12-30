@@ -1,4 +1,5 @@
 local-up:
+	if ! [ -f .env.docker.local ]; then echo "no such file: .env.docker.local"; else cp .env.docker.local ./docker/local/.env ; fi
 	docker-compose -f docker/local/docker-compose.yml up -d --build
 
 local-down:

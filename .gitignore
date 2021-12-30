@@ -3,7 +3,8 @@ build
 coverage
 .vscode
 .DS_STORE
-.env
 tmp
 .idea
+.env
 .env.prod
+.env.dev
