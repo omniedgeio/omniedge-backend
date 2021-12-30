@@ -32,7 +32,7 @@ export default class VirtualNetwork extends compose(BaseModel, Filterable) {
   public ipRange: string
 
   @column({ serializeAs: null })
-  public serverId: number
+  public serverId: string
 
   @belongsTo(() => Server)
   public server: BelongsTo<typeof Server>

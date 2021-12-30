@@ -2,11 +2,13 @@ import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { rules, schema } from '@ioc:Adonis/Core/Validator'
 import Database from '@ioc:Adonis/Lucid/Database'
 import Invitation from 'App/Models/Invitation'
+import Server from 'App/Models/Server'
 import User from 'App/Models/User'
 import UserVirtualNetwork from 'App/Models/UserVirtualNetwork'
 import VirtualNetwork from 'App/Models/VirtualNetwork'
 import VirtualNetworkDevice from 'App/Models/VirtualNetworkDevice'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
+import geoip from 'geoip-lite'
 import { InvitationStatus, UserRole } from './../../../contracts/enum'
 
 export default class VirtualNetworksController {
@@ -17,9 +19,6 @@ export default class VirtualNetworksController {
         ip_range: schema.string({ trim: true }, [
           rules.regex(new RegExp(/^([0-9]{1,3}\.){3}[0-9]{1,3}($|\/(16|24))$/)),
         ]),
-        server_id: schema.string({ trim: true }, [
-          rules.exists({ table: 'servers', column: 'id' }),
-        ]),
       }),
       messages: {
         'ip_range.regex': 'Invalid IP range',
@@ -27,15 +26,33 @@ export default class VirtualNetworksController {
       reporter: CustomReporter,
     })
 
-    const virtualNetwork = await VirtualNetwork.create(data)
+    const virtualNetwork = new VirtualNetwork()
+    virtualNetwork.fill(data)
 
+    const location = geoip.lookup(request.ip())
+    let server: Server | null
+    if (location && location.timezone.includes('Asia')) {
+      server = await Server.findBy('country', 'HK')
+    } else if (location && location.timezone.includes('Europe')) {
+      server = await Server.findBy('country', 'DE')
+    } else {
+      server = await Server.findBy('country', 'US')
+    }
+
+    if (server) {
+      virtualNetwork.serverId = server.id
+    }
+
+    await virtualNetwork.save()
     await auth.user?.related('virtualNetworks').attach({
       [virtualNetwork.id]: {
         role: UserRole.Admin,
       },
     })
 
-    await virtualNetwork.load('server')
+    if (virtualNetwork.serverId) {
+      await virtualNetwork.load('server')
+    }
 
     return response.format(200, virtualNetwork)
   }
@@ -119,13 +136,9 @@ export default class VirtualNetworksController {
     await Database.transaction(async (trx) => {
       await Invitation.query({ client: trx }).where('virtual_network_id', params.id).delete()
 
-      await UserVirtualNetwork.query({ client: trx })
-        .where('virtual_network_id', params.id)
-        .delete()
+      await UserVirtualNetwork.query({ client: trx }).where('virtual_network_id', params.id).delete()
 
-      await VirtualNetworkDevice.query({ client: trx })
-        .where('virtual_network_id', params.id)
-        .delete()
+      await VirtualNetworkDevice.query({ client: trx }).where('virtual_network_id', params.id).delete()
 
       await virtualNetwork.useTransaction(trx).delete()
     })
@@ -396,11 +409,7 @@ export default class VirtualNetworksController {
       return response.format(403, 'You are not allowed to delete invitations')
     }
 
-    const invitation = await virtualNetwork
-      .related('invitations')
-      .query()
-      .where('id', params.invitation_id)
-      .first()
+    const invitation = await virtualNetwork.related('invitations').query().where('id', params.invitation_id).first()
 
     if (!invitation) {
       return response.format(404, 'Invitation not found')
