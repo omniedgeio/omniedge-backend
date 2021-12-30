@@ -84,6 +84,7 @@ Route.group(() => {
     Route.group(() => {
       Route.post('/', 'SecurityKeysController.create')
       Route.get('/', 'SecurityKeysController.list')
+      Route.get('/:id', 'SecurityKeysController.retrieve')
       Route.put('/:id', 'SecurityKeysController.update')
       Route.delete('/:id', 'SecurityKeysController.delete')
     }).prefix('/security-keys')

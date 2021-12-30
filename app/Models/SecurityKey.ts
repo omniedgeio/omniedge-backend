@@ -1,48 +1,42 @@
-import {
-  BaseModel,
-  beforeCreate,
-  BelongsTo,
-  belongsTo,
-  column,
-} from "@ioc:Adonis/Lucid/Orm";
-import { DateTime } from "luxon";
-import { SecurityKeyType } from "./../../contracts/enum";
-import { modelId } from "./../../utils/nanoid";
-import User from "./User";
+import { BaseModel, beforeCreate, BelongsTo, belongsTo, column } from '@ioc:Adonis/Lucid/Orm'
+import { DateTime } from 'luxon'
+import { SecurityKeyType } from './../../contracts/enum'
+import { modelId } from './../../utils/nanoid'
+import User from './User'
 
 export default class SecurityKey extends BaseModel {
   @column({ isPrimary: true })
-  public id: string;
+  public id: string
 
   @column()
-  public userId: string;
+  public userId: string
 
   @column()
-  public name: string;
+  public name: string
 
   @column()
-  public type: string;
+  public type: SecurityKeyType
 
   @column()
-  public token: string;
+  public token: string
 
   @column()
-  public keyType: SecurityKeyType;
+  public key: string
 
   @column.dateTime()
-  public expiredAt: DateTime | null;
+  public expiresAt: DateTime | null
 
   @belongsTo(() => User)
-  public user: BelongsTo<typeof User>;
+  public user: BelongsTo<typeof User>
 
   @column.dateTime({ autoCreate: true })
-  public createdAt: DateTime;
+  public createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
-  public updatedAt: DateTime;
+  public updatedAt: DateTime
 
   @beforeCreate()
   public static async createID(model: SecurityKey) {
-    model.id = "sck_" + modelId();
+    model.id = 'sck_' + modelId()
   }
 }
