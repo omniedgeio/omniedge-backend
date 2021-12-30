@@ -30,11 +30,13 @@ export default class Invitation extends compose(BaseModel, Filterable) {
 
   @belongsTo(() => User, {
     foreignKey: 'invitedUserId',
+    serializeAs: 'invited',
   })
   public invited: BelongsTo<typeof User>
 
   @belongsTo(() => User, {
     foreignKey: 'invitedByUserId',
+    serializeAs: 'invited_by',
   })
   public invitedBy: BelongsTo<typeof User>
 

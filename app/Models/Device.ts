@@ -31,6 +31,7 @@ export default class Device extends compose(BaseModel, Filterable) {
   @manyToMany(() => VirtualNetwork, {
     pivotTable: 'virtual_network_device',
     pivotColumns: ['virtual_ip', 'last_seen'],
+    serializeAs: 'virtual_networks',
   })
   public virtualNetworks: ManyToMany<typeof VirtualNetwork>
 

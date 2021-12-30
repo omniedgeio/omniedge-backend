@@ -45,7 +45,8 @@ export default class VirtualNetwork extends compose(BaseModel, Filterable) {
 
   @manyToMany(() => User, {
     pivotTable: 'user_virtual_network',
-    pivotColumns: ['role'],
+    pivotColumns: ['role', 'created_at'],
+    pivotTimestamps: true,
   })
   public users: ManyToMany<typeof User>
 

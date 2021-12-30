@@ -61,7 +61,8 @@ export default class User extends compose(BaseModel, Filterable) {
 
   @manyToMany(() => VirtualNetwork, {
     pivotTable: 'user_virtual_network',
-    pivotColumns: ['role'],
+    pivotColumns: ['role', 'created_at'],
+    pivotTimestamps: true,
   })
   public virtualNetworks: ManyToMany<typeof VirtualNetwork>
 
@@ -95,6 +96,7 @@ export default class User extends compose(BaseModel, Filterable) {
   public serializeExtras() {
     return {
       role: this.$extras.pivot_role,
+      joined_at: this.$extras.pivot_created_at,
     }
   }
 
