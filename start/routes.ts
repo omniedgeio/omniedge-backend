@@ -37,9 +37,9 @@ Route.group(() => {
 
   Route.group(() => {
     Route.group(() => {
-      Route.get('/', 'ProfileController.index')
-      Route.put('/', 'ProfileController.update')
-      Route.put('/change-password', 'ProfileController.changePassword')
+      Route.get('/', 'ProfilesController.index')
+      Route.put('/', 'ProfilesController.update')
+      Route.put('/change-password', 'ProfilesController.changePassword')
     }).prefix('/profile')
 
     Route.group(() => {
