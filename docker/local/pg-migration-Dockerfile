@@ -8,6 +8,4 @@ COPY . .
 
 WORKDIR /app
 
-COPY .env.docker.local ./.env
-
 ENTRYPOINT ["node", "ace", "migration:run"]

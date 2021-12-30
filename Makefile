@@ -11,5 +11,5 @@ local-pg-up:
 local-pg-down:
 	docker-compose -f docker/local/pg.yml down
 
-prod-build-image:
-	docker build -t omniedge-backend -f docker/prod/Dockerfile .
+build-image:
+	docker build -t omniedge-backend -f docker/Dockerfile .
