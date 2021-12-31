@@ -106,6 +106,7 @@ const authConfig: AuthConfig = {
     },
     jwt: {
       driver: 'jwt',
+      signAlg: 'HS512',
       publicKey: Env.get('JWT_PUBLIC_KEY', '').replace(/\\n/g, '\n'),
       privateKey: Env.get('JWT_PRIVATE_KEY', '').replace(/\\n/g, '\n'),
       persistJwt: true,

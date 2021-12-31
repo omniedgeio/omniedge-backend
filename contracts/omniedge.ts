@@ -3,8 +3,11 @@ import { rules } from '@ioc:Adonis/Core/Validator'
 
 const omniedgeConfig = {
   key: {
-    AUTH_EMAIL_PRIVATE_KEY: Env.get('JWT_PRIVATE_KEY').replace(/\\n/g, '\n'),
-
+    signAlg: 'HS512',
+    activateAccountKey: Env.get('JWT_PRIVATE_KEY').replace(/\\n/g, '\n'),
+    forgetPasswordKey: Env.get('JWT_PRIVATE_KEY').replace(/\\n/g, '\n'),
+    activateAccountExpiresIn: '1h',
+    forgetPasswordExpiresIn: '600s',
   },
   mail: {
     senderAddress: Env.get('SES_SENDER_ADDRESS') as string,

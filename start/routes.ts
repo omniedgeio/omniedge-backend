@@ -30,6 +30,7 @@ Route.group(() => {
     Route.post('/login/security-key', 'AuthController.loginWithSecurityKey')
     Route.post('/reset-password/code', 'AuthController.resetPasswordWithCode')
     Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
+    Route.post('/forget', 'AuthController.forgetPassword')
 
     // Features
     Route.post('/verify-email', 'AuthController.verifyEmail')

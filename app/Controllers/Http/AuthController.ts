@@ -13,10 +13,12 @@ import omniedgeConfig from 'Contracts/omniedge'
 import { JWTCustomPayload } from '@ioc:Adonis/Addons/Jwt'
 import { ErrorCode } from '../../../utils/constant'
 import AuthException from 'App/Exceptions/AuthException'
+import omniedge from 'Contracts/omniedge'
 
 // todo all login check user status!=blocked
 export default class AuthController {
   private static activateEndpoint = '/auth/register/activate?token='
+  private static resetPasswordEndpoint = '/auth/reset-password/verify?token='
 
   /**
    * happy path: user register -> [inactive user] -> send email -> user click the email -> [active user]
@@ -57,7 +59,7 @@ export default class AuthController {
     } else {
       response.formatError(502, ErrorCode.auth.E_SAVE_USER, 'Fail to save user')
     }
-    const emailToken = await this.generateEmailToken(user.email)
+    const emailToken = await this.generateActivateToken(user.email)
     await Mail.use().sendLater((message) => {
         message.from(omniedgeConfig.mail.senderAddress)
           // todo change email address
@@ -82,8 +84,12 @@ export default class AuthController {
       ]),
     })
     const payload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
-    const user = await User.findByOrFail('email', payload.email)
-    const emailToken = await this.generateEmailToken(user.email!!)
+    const user = await User.findBy('email', payload.email)
+    if (!user) {
+      response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
+      return
+    }
+    const emailToken = await this.generateActivateToken(user.email!!)
     try {
       await Mail.use().send((message) => {
           message.from(omniedgeConfig.mail.senderAddress, omniedgeConfig.mail.senderName)
@@ -97,7 +103,7 @@ export default class AuthController {
       )
       response.format(200, '')
     } catch (e) {
-      Logger.fatal('fail to send email')
+      Logger.fatal('fail to send email, err: %o', e)
       response.formatError(500, ErrorCode.auth.F_EMAIL_SEND, 'Fail to send verify email')
     }
 
@@ -121,7 +127,7 @@ export default class AuthController {
     let jwtPayload: JWTCustomPayload | undefined
 
     try {
-      jwtPayload = await this.verifyEmailToken(requestPayload.token)
+      jwtPayload = await this.verifyActivateToken(requestPayload.token)
     } catch (e) {
       Logger.error('Invalid token: jwt token is %o', jwtPayload)
       response.formatError(400, ErrorCode.auth.E_TOKEN_INVALID, e.message)
@@ -132,7 +138,11 @@ export default class AuthController {
       response.formatError(400, ErrorCode.auth.E_TOKEN_INVALID, 'Invalid JWT payload: missing email')
       return
     }
-    const user = await User.findByOrFail('email', jwtPayload.data!!.email)
+    const user = await User.findBy('email', jwtPayload.data!!.email)
+    if (!user) {
+      response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
+      return
+    }
     switch (user.status) {
       case UserStatus.Active:
         response.formatError(400, ErrorCode.auth.E_USER_EXISTED, 'User is already active')
@@ -240,6 +250,77 @@ export default class AuthController {
     }
   }
 
+  public async forgetPassword({ request, response }: HttpContextContract) {
+    const requestSchema = schema.create({
+      email: schema.string({ trim: true }, [rules.email({
+        sanitize: {
+          lowerCase: true,
+        },
+      })]),
+    })
+    const payload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
+    const email = payload.email
+    const user = await User.findBy('email', email)
+    if (!user) {
+      response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
+      return
+    }
+    const forgetPasswordToken = await this.generateForgetPasswordToken(email)
+    try {
+      await Mail.use().send((message) => {
+          message.from(omniedgeConfig.mail.senderAddress, omniedgeConfig.mail.senderName)
+            .to(payload.email)
+            .subject('Forget Password')
+            .htmlView('emails/register', {
+              name: user.name,
+              uri: omniedgeConfig.mail.baseUrl + AuthController.resetPasswordEndpoint + forgetPasswordToken,
+            })
+        },
+      )
+      response.format(200, '')
+    } catch (e) {
+      Logger.fatal('Fail to send forget password email')
+      response.formatError(500, ErrorCode.auth.F_EMAIL_SEND, 'Fail to send forget password email')
+    }
+  }
+
+
+  public async resetPasswordWithVerification({ request, response }: HttpContextContract) {
+    const authSchema = schema.create({
+      token: schema.string({ trim: true }),
+      password: schema.string({ trim: true }),
+    })
+    const requestPayload = await request.validate({ schema: authSchema, reporter: CustomReporter })
+    let jwtPayload: JWTCustomPayload | undefined
+    try {
+      jwtPayload = await this.verifyForgetPasswordToken(requestPayload.token)
+    } catch (e) {
+      Logger.error('Invalid token: jwt token is %o', jwtPayload)
+      response.formatError(400, ErrorCode.auth.E_TOKEN_INVALID, e.message)
+      return
+    }
+    if (!jwtPayload) {
+      response.formatError(401, ErrorCode.auth.E_TOKEN_INVALID, 'The forget password token may be invalid')
+      return
+    }
+    if (!jwtPayload!!.data!!.email) {
+      Logger.error('Invalid JWT payload: missing email, payload is %o', jwtPayload)
+      response.formatError(400, ErrorCode.auth.E_TOKEN_INVALID, 'Invalid JWT payload: missing email')
+      return
+    }
+    const email = jwtPayload!!.data!!.email
+
+    const user = await User.findBy('email', email)
+    if (!user) {
+      response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
+      return
+    }
+    user.password = requestPayload.password
+    const resUser = await user.save()
+    response.format(200, resUser)
+  }
+
+
   private async verifyGoogleIdToken(idToken: string): Promise<TokenPayload> {
     const googleClientId = process.env.GOOGLE_CLIENT_ID
     const client = new OAuth2Client(googleClientId)
@@ -248,7 +329,8 @@ export default class AuthController {
       audience: googleClientId,
     })
     const payload = ticket.getPayload()
-    if (payload == undefined) {
+    if (payload == undefined
+    ) {
       throw new AuthException(401, ErrorCode.auth.E_GOOGLE_AUTH_FAIL, 'Fail to get Google payload', null)
     } else if (!payload.email) {
       throw new AuthException(401, ErrorCode.auth.E_GOOGLE_AUTH_FAIL, 'Google payload does not have attribute: email', null)
@@ -259,11 +341,20 @@ export default class AuthController {
     }
   }
 
-  private async generateEmailToken(email: string): Promise<string> {
-    return generateToken('1h', { email: email }, omniedgeConfig.key.AUTH_EMAIL_PRIVATE_KEY)
+  private async generateForgetPasswordToken(email: string): Promise<string> {
+    return generateToken(omniedge.key.forgetPasswordExpiresIn, { email: email }, omniedgeConfig.key.forgetPasswordKey)
   }
 
-  private async verifyEmailToken(token: string): Promise<JWTCustomPayload> {
-    return verifyToken(token, omniedgeConfig.key.AUTH_EMAIL_PRIVATE_KEY)
+  private async verifyForgetPasswordToken(token: string): Promise<JWTCustomPayload> {
+    return verifyToken(token, omniedgeConfig.key.forgetPasswordKey)
+  }
+
+
+  private async generateActivateToken(email: string): Promise<string> {
+    return generateToken(omniedge.key.activateAccountExpiresIn, { email: email }, omniedgeConfig.key.activateAccountKey)
+  }
+
+  private async verifyActivateToken(token: string): Promise<JWTCustomPayload> {
+    return verifyToken(token, omniedgeConfig.key.activateAccountKey)
   }
 }
