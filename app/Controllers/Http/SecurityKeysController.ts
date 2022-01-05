@@ -19,21 +19,28 @@ export default class SecurityKeysController {
     })
 
     const user = auth.user!
-    const key = nanoid(60)
     const securityKey = new SecurityKey()
+
+    let key: string
+    switch (payload.type) {
+      case SecurityKeyType.Permanent:
+        key = nanoid(64)
+        securityKey.expiresAt = DateTime.now().plus({ seconds: Env.get('NORMAL_SECURITY_KEY_EXPIRE', 3600 * 24) })
+        break
+      case SecurityKeyType.Temporary:
+        key = nanoid(32)
+        securityKey.expiresAt = DateTime.now().plus({ seconds: Env.get('ONE_TIME_SECURITY_KEY_EXPIRE', 3600) })
+        break
+      default:
+        throw new Error('Invalid security key type')
+    }
+
     securityKey.fill({
       keyLstr: key.substring(0, 16),
       name: payload.name,
       type: payload.type as SecurityKeyType,
       key: await Hash.make(key),
     })
-
-    switch (payload.type) {
-      case SecurityKeyType.Permanent:
-        securityKey.expiresAt = DateTime.now().plus({ seconds: Env.get('NORMAL_SECURITY_KEY_EXPIRE', 3600 * 24) })
-      case SecurityKeyType.Temporary:
-        securityKey.expiresAt = DateTime.now().plus({ seconds: Env.get('ONE_TIME_SECURITY_KEY_EXPIRE', 3600) })
-    }
 
     await user.related('securityKeys').create(securityKey)
 
