@@ -14,6 +14,8 @@ import { JWTCustomPayload } from '@ioc:Adonis/Addons/Jwt'
 import { ErrorCode } from '../../../utils/constant'
 import AuthException from 'App/Exceptions/AuthException'
 import omniedge from 'Contracts/omniedge'
+import SecurityKey from 'App/Models/SecurityKey'
+import Hash from '@ioc:Adonis/Core/Hash'
 
 // todo all login check user status!=blocked
 export default class AuthController {
@@ -178,15 +180,21 @@ export default class AuthController {
       key: schema.string({ trim: true }),
     })
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
-    try {
-      const token = await auth.use('jwt').attemptSecretKey(payload.key, {
-        expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
-      })
-      response.format(200, token)
-    } catch (e) {
-      response.formatError(401, e.code, e.message)
+    const keyLstr = payload.key.substring(0, 16)
+    const sks = await SecurityKey
+      .query()
+      .where('keyLstr', keyLstr)
+    for (let sk of sks) {
+      if (await Hash.verify(sk.key, payload.key)) {
+        const user = await User.find(sk.userId)
+        const token = await auth.use('jwt').generate(user!!, {
+          expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
+        })
+        response.format(200, token)
+        return
+      }
     }
-
+    response.formatError(401, ErrorCode.auth.E_TOKEN_INVALID, 'Invalid security key')
   }
 
   /**

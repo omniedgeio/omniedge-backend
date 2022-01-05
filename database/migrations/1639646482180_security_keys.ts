@@ -9,6 +9,7 @@ export default class SecurityKeys extends BaseSchema {
       table.string('user_id').unsigned().references('id').inTable('users')
       table.string('name').notNullable()
       table.string('type').notNullable()
+      table.string('key_lstr', 32).notNullable()
       table.string('key', 72).notNullable().unique()
 
       table.timestamp('expires_at', { useTz: true }).nullable()

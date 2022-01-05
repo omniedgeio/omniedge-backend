@@ -21,6 +21,9 @@ export default class SecurityKey extends BaseModel {
   public token: string
 
   @column()
+  public keyLstr: string
+
+  @column()
   public key: string
 
   @column.dateTime()

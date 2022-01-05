@@ -19,9 +19,10 @@ export default class SecurityKeysController {
     })
 
     const user = auth.user!
-    const key = nanoid(32)
+    const key = nanoid(60)
     const securityKey = new SecurityKey()
     securityKey.fill({
+      keyLstr: key.substring(0, 16),
       name: payload.name,
       type: payload.type as SecurityKeyType,
       key: await Hash.make(key),
@@ -29,9 +30,9 @@ export default class SecurityKeysController {
 
     switch (payload.type) {
       case SecurityKeyType.Permanent:
-        securityKey.expiresAt = DateTime.now().plus({ millisecond: Env.get('NORMAL_SECURITY_KEY_EXPIRE') })
+        securityKey.expiresAt = DateTime.now().plus({ seconds: Env.get('NORMAL_SECURITY_KEY_EXPIRE', 3600 * 24) })
       case SecurityKeyType.Temporary:
-        securityKey.expiresAt = DateTime.now().plus({ millisecond: Env.get('ONE_TIME_SECURITY_KEY_EXPIRE') })
+        securityKey.expiresAt = DateTime.now().plus({ seconds: Env.get('ONE_TIME_SECURITY_KEY_EXPIRE', 3600) })
     }
 
     await user.related('securityKeys').create(securityKey)
@@ -54,7 +55,7 @@ export default class SecurityKeysController {
       .select('id', 'name', 'type', 'expires_at', 'created_at')
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, securityKeys.serialize())
