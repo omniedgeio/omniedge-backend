@@ -10,14 +10,17 @@ import VirtualNetworkDevice from 'App/Models/VirtualNetworkDevice'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import geoip from 'geoip-lite'
 import { InvitationStatus, UserRole } from './../../../contracts/enum'
+import Logger from '@ioc:Adonis/Core/Logger'
 
 export default class VirtualNetworksController {
+
   public async create({ request, response, auth }: HttpContextContract) {
+    const v4str = '(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}\\/(3[0-2]|[12]?[0-9])'
     const data = await request.validate({
       schema: schema.create({
         name: schema.string({ trim: true }, [rules.maxLength(255)]),
         ip_range: schema.string({ trim: true }, [
-          rules.regex(new RegExp(/^([0-9]{1,3}\.){3}[0-9]{1,3}($|\/(16|24))$/)),
+          rules.regex(new RegExp(v4str)),
         ]),
       }),
       messages: {
@@ -30,6 +33,7 @@ export default class VirtualNetworksController {
     virtualNetwork.fill(data)
 
     const location = geoip.lookup(request.ip())
+    Logger.debug('request ip is %s', request.ip())
     let server: Server | null
     if (location && location.timezone.includes('Asia')) {
       server = await Server.findBy('country', 'HK')
@@ -71,7 +75,7 @@ export default class VirtualNetworksController {
       .preload('server')
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, virtualNetworks?.serialize())
@@ -167,7 +171,7 @@ export default class VirtualNetworksController {
       .select('id', 'name', 'email', 'picture', 'status')
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, users?.serialize())
@@ -246,7 +250,7 @@ export default class VirtualNetworksController {
       await VirtualNetworkDevice.query({ client: trx })
         .whereIn(
           'device_id',
-          Database.from('devices').useTransaction(trx).select('id').where('user_id', params.user_id)
+          Database.from('devices').useTransaction(trx).select('id').where('user_id', params.user_id),
         )
         .delete()
 
@@ -260,6 +264,7 @@ export default class VirtualNetworksController {
 
   /* -------------------------------------------------------------------------- */
   /*                          Virtual Network > Devices                         */
+
   /* -------------------------------------------------------------------------- */
 
   public async listDevices({ params, request, response, auth }: HttpContextContract) {
@@ -284,7 +289,7 @@ export default class VirtualNetworksController {
       .filter(request.qs())
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, devices?.serialize())
@@ -321,6 +326,7 @@ export default class VirtualNetworksController {
 
   /* -------------------------------------------------------------------------- */
   /*                        Virtual Network > Invitations                       */
+
   /* -------------------------------------------------------------------------- */
 
   public async createInvitation({ params, request, response, auth }: HttpContextContract) {
@@ -331,8 +337,8 @@ export default class VirtualNetworksController {
             {
               trim: true,
             },
-            [rules.email()]
-          )
+            [rules.email()],
+          ),
         ),
       }),
       reporter: CustomReporter,
@@ -360,7 +366,7 @@ export default class VirtualNetworksController {
         invitedByUserId: auth.user?.id,
         virtualNetworkId: virtualNetwork.id,
         status: InvitationStatus.Pending,
-      }))
+      })),
     )
 
     return response.format(200, invitations)
@@ -388,7 +394,7 @@ export default class VirtualNetworksController {
       .preload('invitedBy', (query) => query.select('id', 'name', 'email'))
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, invitations?.serialize())
