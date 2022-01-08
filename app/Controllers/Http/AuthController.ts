@@ -19,14 +19,14 @@ import Hash from '@ioc:Adonis/Core/Hash'
 
 // todo all login check user status!=blocked
 export default class AuthController {
-  private static activateEndpoint = '/auth/register/activate?token='
-  private static resetPasswordEndpoint = '/auth/reset-password/verify?token='
+  private static activateEndpoint = '/api/auth/register/activate?token='
+  private static resetPasswordEndpoint = '/api/auth/reset-password/verify?token='
 
   /**
    * happy path: user register -> [inactive user] -> send email -> user click the email -> [active user]
    * 1. if user register with the same email, it will be rejected with the following rules
-   *  a. if user's status is inactive, redirect the page in which user can resend verify email
-   *  b. if user's status is active, tell user that the email is already used, and redirect to login page
+   *  a. if user's status is inactive, redirect the page in which user can resend verify email [not implementation]
+   *  b. if user's status is active, tell user that the email is already used, and redirect to login page [not implementation]
    * 2. if fail to send the email, or user does not click the verify email
    *    user still log in to one special page to activate the account by the way resending verify email
    * @param request
@@ -64,10 +64,9 @@ export default class AuthController {
     const emailToken = await this.generateActivateToken(user.email)
     await Mail.use().sendLater((message) => {
         message.from(omniedgeConfig.mail.senderAddress)
-          // todo change email address
           .to(payload.email)
           .subject('Welcome to Omniedge')
-          .htmlView('emails/register', {
+          .htmlView('emails/welcome', {
             name: user.name,
             uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
           })
@@ -91,13 +90,21 @@ export default class AuthController {
       response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
       return
     }
+    if (UserStatus.Active == user.status) {
+      response.formatError(400, ErrorCode.auth.E_USER_ACTIVATED, 'User is already activated')
+      return
+    }
+    if (UserStatus.Blocked == user.status) {
+      response.formatError(403, ErrorCode.auth.E_USER_BLOCKED, 'User is blocked')
+      return
+    }
     const emailToken = await this.generateActivateToken(user.email!!)
     try {
       await Mail.use().send((message) => {
           message.from(omniedgeConfig.mail.senderAddress, omniedgeConfig.mail.senderName)
             .to(payload.email)
             .subject('Welcome to Omniedge')
-            .htmlView('emails/register', {
+            .htmlView('emails/welcome', {
               name: user.name,
               uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
             })
@@ -147,7 +154,7 @@ export default class AuthController {
     }
     switch (user.status) {
       case UserStatus.Active:
-        response.formatError(400, ErrorCode.auth.E_USER_EXISTED, 'User is already active')
+        response.formatError(400, ErrorCode.auth.E_USER_ACTIVATED, 'User is already activated')
         return
       case UserStatus.Blocked:
         response.formatError(403, ErrorCode.auth.E_USER_BLOCKED, 'User is blocked')
@@ -279,7 +286,7 @@ export default class AuthController {
           message.from(omniedgeConfig.mail.senderAddress, omniedgeConfig.mail.senderName)
             .to(payload.email)
             .subject('Forget Password')
-            .htmlView('emails/register', {
+            .htmlView('emails/forget', {
               name: user.name,
               uri: omniedgeConfig.mail.baseUrl + AuthController.resetPasswordEndpoint + forgetPasswordToken,
             })
