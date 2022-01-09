@@ -59,6 +59,7 @@ Route.group(() => {
       Route.group(() => {
         Route.get('/', 'VirtualNetworksController.listDevices')
         Route.delete('/:device_id', 'VirtualNetworksController.deleteDevice')
+        Route.post('/:device_id', 'VirtualNetworksController.joinDevice')
       }).prefix('/:id/devices')
 
       Route.group(() => {

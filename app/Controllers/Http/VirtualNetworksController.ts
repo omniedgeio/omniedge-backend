@@ -11,6 +11,11 @@ import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import geoip from 'geoip-lite'
 import { InvitationStatus, UserRole } from './../../../contracts/enum'
 import Logger from '@ioc:Adonis/Core/Logger'
+import { DateTime } from 'luxon'
+
+const Netmask = require('netmask').Netmask
+const long2ip = require('netmask').long2ip
+const ip2long = require('netmask').ip2long
 
 export default class VirtualNetworksController {
 
@@ -152,6 +157,7 @@ export default class VirtualNetworksController {
 
   /* -------------------------------------------------------------------------- */
   /*                           Virtual Network > Users                          */
+
   /* -------------------------------------------------------------------------- */
 
   public async listUsers({ params, response, request, auth }: HttpContextContract) {
@@ -324,6 +330,57 @@ export default class VirtualNetworksController {
     return response.format(200, 'Deleted device successfully')
   }
 
+
+  public async joinDevice({ params, response, auth }: HttpContextContract) {
+    const virtualNetwork = await auth.user
+      ?.related('virtualNetworks')
+      .query()
+      .where('virtual_networks.id', params.id)
+      .first()
+
+    const device = await auth.user
+      ?.related('devices')
+      .query()
+      .where('devices.id', params.device_id)
+      .first()
+
+    if (!virtualNetwork) {
+      return response.format(404, 'Virtual network not found')
+    }
+
+    if (!device) {
+      return response.format(404, 'Device not found')
+    }
+
+    if (!(await auth.user?.isAdminOf(virtualNetwork))) {
+      return response.format(403, 'You are not authorized to delete device')
+    }
+
+    const vnDevices = await VirtualNetworkDevice
+      .query()
+      .where('virtual_network_id', params.id)
+
+    const usedIps: string[] = []
+    for (let i = 0; i < vnDevices.length; i++) {
+      usedIps.push(vnDevices[i].virtualIp)
+      if (vnDevices[i].deviceId === params.device_id) {
+        return response.format(400, 'Device already in virtual network')
+      }
+    }
+
+    const virtualNetworkDevice = await VirtualNetworkDevice.firstOrCreate(
+      {
+        deviceId: params.device_id,
+        virtualNetworkId: params.id,
+        virtualIp: this.nextUnassignedIP(virtualNetwork, usedIps),
+        lastSeen: DateTime.now(),
+      },
+    )
+    await virtualNetworkDevice.save()
+
+    return response.format(200, 'Join device successfully')
+  }
+
   /* -------------------------------------------------------------------------- */
   /*                        Virtual Network > Invitations                       */
 
@@ -423,5 +480,18 @@ export default class VirtualNetworksController {
     await invitation.delete()
 
     return response.format(200, 'Deleted invitation successfully')
+  }
+
+  // next unassigned virtual ip
+  private nextUnassignedIP(vn: VirtualNetwork, usedIps: string[]): string {
+    const block = new Netmask(vn.ipRange)
+    const first = ip2long(block.first)
+    for (let i = 0; i < block.size; i++) {
+      const t = first + i
+      if (usedIps.indexOf(long2ip(t)) < 0) {
+        return long2ip(t)
+      }
+    }
+    return ''
   }
 }
