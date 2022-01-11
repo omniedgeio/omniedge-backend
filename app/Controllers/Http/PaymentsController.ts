@@ -56,12 +56,10 @@ export default class PaymentsController {
     if (user.plan.slug !== 'free' && user.stripeSubscriptionId) {
       // Cancel Plan
       if (plan.slug === 'free') {
-        const subscription = await Stripe.subscriptions.update(user.stripeSubscriptionId, {
+        await Stripe.subscriptions.update(user.stripeSubscriptionId, {
           cancel_at_period_end: true,
         })
-        if (subscription.status !== 'canceled') {
-          return response.format(500, 'Failed to cancel subscription')
-        }
+        return response.format(200, 'Cancelled subscription successfully.')
       } else {
         // Upgrade or downgrade plan
         const subscription = await Stripe.subscriptions.retrieve(user.stripeSubscriptionId)
