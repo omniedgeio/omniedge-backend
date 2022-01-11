@@ -23,6 +23,7 @@ import Identity from './Identity'
 import Invitation from './Invitation'
 import PasswordReset from './PasswordReset'
 import Plan from './Plan'
+import PlanLimit from './PlanLimit'
 import SecurityKey from './SecurityKey'
 import UserLimit from './UserLimit'
 import UserVirtualNetwork from './UserVirtualNetwork'
@@ -140,5 +141,18 @@ export default class User extends compose(BaseModel, Filterable) {
     const stripeSubscription = await Stripe.subscriptions.retrieve(this.stripeSubscriptionId)
 
     return stripeSubscription
+  }
+
+  public async getLimit(key: string): Promise<number> {
+    if (!this.planId) return 0
+    const userLimit = await UserLimit.query().where('user_id', this.id).where('key', key).first()
+    if (!userLimit) {
+      const planLimit = await PlanLimit.query().where('plan_id', this.planId).where('key', key).first()
+      if (!planLimit) {
+        return 0
+      }
+      return planLimit.defaultLimit
+    }
+    return userLimit?.limit
   }
 }

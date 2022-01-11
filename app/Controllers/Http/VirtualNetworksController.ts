@@ -1,4 +1,5 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import Logger from '@ioc:Adonis/Core/Logger'
 import { rules, schema } from '@ioc:Adonis/Core/Validator'
 import Database from '@ioc:Adonis/Lucid/Database'
 import Invitation from 'App/Models/Invitation'
@@ -9,30 +10,34 @@ import VirtualNetwork from 'App/Models/VirtualNetwork'
 import VirtualNetworkDevice from 'App/Models/VirtualNetworkDevice'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import geoip from 'geoip-lite'
-import { InvitationStatus, UserRole } from './../../../contracts/enum'
-import Logger from '@ioc:Adonis/Core/Logger'
 import { DateTime } from 'luxon'
+import { InvitationStatus, UserRole } from './../../../contracts/enum'
 
 const Netmask = require('netmask').Netmask
 const long2ip = require('netmask').long2ip
 const ip2long = require('netmask').ip2long
 
 export default class VirtualNetworksController {
-
   public async create({ request, response, auth }: HttpContextContract) {
-    const v4str = '(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}\\/(3[0-2]|[12]?[0-9])'
+    const v4str =
+      '(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}\\/(3[0-2]|[12]?[0-9])'
     const data = await request.validate({
       schema: schema.create({
         name: schema.string({ trim: true }, [rules.maxLength(255)]),
-        ip_range: schema.string({ trim: true }, [
-          rules.regex(new RegExp(v4str)),
-        ]),
+        ip_range: schema.string({ trim: true }, [rules.regex(new RegExp(v4str))]),
       }),
       messages: {
         'ip_range.regex': 'Invalid IP range',
       },
       reporter: CustomReporter,
     })
+
+    const user = auth.user!
+    const limit = await user.getLimit('virtual-networks')
+    const virtualNetworksCount = await user.related('virtualNetworks').query().count('* as count')
+    if (virtualNetworksCount[0].$extras.count >= limit) {
+      return response.format(400, 'You have reached the limit of virtual networks')
+    }
 
     const virtualNetwork = new VirtualNetwork()
     virtualNetwork.fill(data)
@@ -80,7 +85,7 @@ export default class VirtualNetworksController {
       .preload('server')
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10)),
+        Math.round(Math.max(request.input('per_page') || 10, 10))
       )
 
     return response.format(200, virtualNetworks?.serialize())
@@ -177,7 +182,7 @@ export default class VirtualNetworksController {
       .select('id', 'name', 'email', 'picture', 'status')
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10)),
+        Math.round(Math.max(request.input('per_page') || 10, 10))
       )
 
     return response.format(200, users?.serialize())
@@ -256,7 +261,7 @@ export default class VirtualNetworksController {
       await VirtualNetworkDevice.query({ client: trx })
         .whereIn(
           'device_id',
-          Database.from('devices').useTransaction(trx).select('id').where('user_id', params.user_id),
+          Database.from('devices').useTransaction(trx).select('id').where('user_id', params.user_id)
         )
         .delete()
 
@@ -295,7 +300,7 @@ export default class VirtualNetworksController {
       .filter(request.qs())
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10)),
+        Math.round(Math.max(request.input('per_page') || 10, 10))
       )
 
     return response.format(200, devices?.serialize())
@@ -330,7 +335,6 @@ export default class VirtualNetworksController {
     return response.format(200, 'Deleted device successfully')
   }
 
-
   public async joinDevice({ params, response, auth }: HttpContextContract) {
     const virtualNetwork = await auth.user
       ?.related('virtualNetworks')
@@ -338,11 +342,7 @@ export default class VirtualNetworksController {
       .where('virtual_networks.id', params.id)
       .first()
 
-    const device = await auth.user
-      ?.related('devices')
-      .query()
-      .where('devices.id', params.device_id)
-      .first()
+    const device = await auth.user?.related('devices').query().where('devices.id', params.device_id).first()
 
     if (!virtualNetwork) {
       return response.format(404, 'Virtual network not found')
@@ -356,9 +356,7 @@ export default class VirtualNetworksController {
       return response.format(403, 'You are not authorized to delete device')
     }
 
-    const vnDevices = await VirtualNetworkDevice
-      .query()
-      .where('virtual_network_id', params.id)
+    const vnDevices = await VirtualNetworkDevice.query().where('virtual_network_id', params.id)
 
     const usedIps: string[] = []
     for (let i = 0; i < vnDevices.length; i++) {
@@ -368,14 +366,12 @@ export default class VirtualNetworksController {
       }
     }
 
-    const virtualNetworkDevice = await VirtualNetworkDevice.firstOrCreate(
-      {
-        deviceId: params.device_id,
-        virtualNetworkId: params.id,
-        virtualIp: this.nextUnassignedIP(virtualNetwork, usedIps),
-        lastSeen: DateTime.now(),
-      },
-    )
+    const virtualNetworkDevice = await VirtualNetworkDevice.firstOrCreate({
+      deviceId: params.device_id,
+      virtualNetworkId: params.id,
+      virtualIp: this.nextUnassignedIP(virtualNetwork, usedIps),
+      lastSeen: DateTime.now(),
+    })
     await virtualNetworkDevice.save()
 
     return response.format(200, 'Join device successfully')
@@ -394,8 +390,8 @@ export default class VirtualNetworksController {
             {
               trim: true,
             },
-            [rules.email()],
-          ),
+            [rules.email()]
+          )
         ),
       }),
       reporter: CustomReporter,
@@ -423,7 +419,7 @@ export default class VirtualNetworksController {
         invitedByUserId: auth.user?.id,
         virtualNetworkId: virtualNetwork.id,
         status: InvitationStatus.Pending,
-      })),
+      }))
     )
 
     return response.format(200, invitations)
@@ -451,7 +447,7 @@ export default class VirtualNetworksController {
       .preload('invitedBy', (query) => query.select('id', 'name', 'email'))
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10)),
+        Math.round(Math.max(request.input('per_page') || 10, 10))
       )
 
     return response.format(200, invitations?.serialize())
