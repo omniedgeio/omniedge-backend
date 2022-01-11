@@ -1,22 +1,32 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import User from 'App/Models/User'
-import Logger from '@ioc:Adonis/Core/Logger'
 import { rules, schema } from '@ioc:Adonis/Core/Validator'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import Omniedge from 'Contracts/omniedge'
+import { DateTime } from 'luxon'
 import { ErrorCode } from '../../../utils/constant'
 
 export default class ProfilesController {
-
   public async index({ response, auth }: HttpContextContract) {
-    const userId = auth.user!.id
-    Logger.info('userId: %s', userId)
-    const users = await User.query()
-      .where('id', userId)
-      .preload('identities', (query) => {
-        query.where('user_id', userId)
-      })
-    response.format(200, users)
+    const user = auth.user!
+    await user.load('plan')
+    await user.load('identities')
+
+    const subscription = await user.getStripeSubcription()
+
+    response.format(200, {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      identities: user.identities,
+      subscription: {
+        title: user.plan.title,
+        slug: user.plan.slug,
+        start_at: subscription?.current_period_start && DateTime.fromSeconds(subscription?.current_period_start),
+        end_at: subscription?.current_period_end && DateTime.fromSeconds(subscription?.current_period_end),
+        cancel_at: subscription?.cancel_at && DateTime.fromSeconds(subscription?.cancel_at),
+      },
+    })
   }
 
   public async update({ request, response, auth }: HttpContextContract) {

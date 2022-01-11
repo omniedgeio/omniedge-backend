@@ -32,4 +32,11 @@ export default Env.rules({
   LOGIN_TOKEN_EXPIRE: Env.schema.string(),
   ONE_TIME_SECURITY_KEY_EXPIRE: Env.schema.number(),
   NORMAL_SECURITY_KEY_EXPIRE: Env.schema.number(),
+
+  // stripe
+  STRIPE_SECRET_KEY: Env.schema.string(),
+  STRIPE_WEBHOOK_KEY: Env.schema.string(),
+  STRIPE_API_VERSION: Env.schema.string(),
+
+  CLIENT_URL: Env.schema.string(),
 })

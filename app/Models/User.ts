@@ -1,10 +1,13 @@
 import { Filterable } from '@ioc:Adonis/Addons/LucidFilter'
+import Stripe from '@ioc:Adonis/Addons/Stripe'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { compose } from '@ioc:Adonis/Core/Helpers'
 import {
   BaseModel,
   beforeCreate,
   beforeSave,
+  BelongsTo,
+  belongsTo,
   column,
   HasMany,
   hasMany,
@@ -19,7 +22,9 @@ import UserFilter from './Filters/UserFilter'
 import Identity from './Identity'
 import Invitation from './Invitation'
 import PasswordReset from './PasswordReset'
+import Plan from './Plan'
 import SecurityKey from './SecurityKey'
+import UserLimit from './UserLimit'
 import UserVirtualNetwork from './UserVirtualNetwork'
 import VirtualNetwork from './VirtualNetwork'
 
@@ -53,6 +58,18 @@ export default class User extends compose(BaseModel, Filterable) {
   @column()
   public status: UserStatus
 
+  @column({ serializeAs: null })
+  public planId: string | null
+
+  @column({ serializeAs: null })
+  public stripeCustomerId: string | null
+
+  @column({ serializeAs: null })
+  public stripeSubscriptionId: string | null
+
+  @column.dateTime({ serializeAs: null })
+  public ExpiredAt: DateTime
+
   @hasMany(() => Device)
   public devices: HasMany<typeof Device>
 
@@ -74,6 +91,12 @@ export default class User extends compose(BaseModel, Filterable) {
 
   @hasMany(() => PasswordReset)
   public passwordResets: HasMany<typeof PasswordReset>
+
+  @belongsTo(() => Plan)
+  public plan: BelongsTo<typeof Plan>
+
+  @hasMany(() => UserLimit)
+  public limits: HasMany<typeof UserLimit>
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
@@ -108,5 +131,14 @@ export default class User extends compose(BaseModel, Filterable) {
       .first()
 
     return !!userVirtualNetwork
+  }
+
+  public async getStripeSubcription() {
+    if (!this.stripeSubscriptionId) {
+      return null
+    }
+    const stripeSubscription = await Stripe.subscriptions.retrieve(this.stripeSubscriptionId)
+
+    return stripeSubscription
   }
 }
