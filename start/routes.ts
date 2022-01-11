@@ -94,5 +94,14 @@ Route.group(() => {
     Route.group(() => {
       Route.get('/', 'ServersController.list')
     }).prefix('servers')
+
+    Route.group(() => {
+      Route.post('/portal-session', 'PaymentsController.createPortalSession')
+      Route.post('/checkout-session', 'PaymentsController.createCheckoutSession')
+    }).prefix('/payment')
   }).middleware('auth')
+
+  Route.group(() => {
+    Route.post('/webhook', 'PaymentsController.stripeWebhook')
+  }).prefix('/payment')
 }).prefix('/api')

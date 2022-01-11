@@ -34,7 +34,8 @@
     "@ivyxjc/adonis5-jwt",
     "adonis-lucid-filter",
     "@adonisjs/mail",
-    "@adonisjs/view"
+    "@adonisjs/view",
+    "@bitkidd/adonis-stripe"
   ],
   "aceProviders": [
     "@adonisjs/repl"
