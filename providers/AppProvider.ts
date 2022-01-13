@@ -1,4 +1,5 @@
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import WebsocketService from 'App/Services/WebSocketService'
 
 export default class AppProvider {
   constructor(protected app: ApplicationContract) {}
@@ -9,6 +10,14 @@ export default class AppProvider {
 
   public async boot() {
     // IoC container is ready
+    const wss = new WebsocketService()
+
+    const HttpContext = this.app.container.use('Adonis/Core/HttpContext')
+
+    HttpContext.getter('ws', function location() {
+      return wss
+    })
+
     const Response = this.app.container.use('Adonis/Core/Response')
 
     Response.macro('format', function (status, data) {

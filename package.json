@@ -24,6 +24,7 @@
     "@adonisjs/view": "^6.1.1",
     "@bitkidd/adonis-stripe": "^8.168.0",
     "@ivyxjc/adonis5-jwt": "0.0.9",
+    "@types/ws": "^8.2.2",
     "adonis-lucid-filter": "^4.1.0",
     "aws-sdk": "^2.1048.0",
     "geoip-lite": "^1.4.2",
@@ -36,6 +37,7 @@
     "proxy-addr": "^2.0.7",
     "reflect-metadata": "^0.1.13",
     "source-map-support": "^0.5.21",
-    "stripe": "^8.195.0"
+    "stripe": "^8.195.0",
+    "ws": "^8.4.0"
   }
 }

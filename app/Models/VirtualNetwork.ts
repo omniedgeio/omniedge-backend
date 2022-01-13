@@ -68,6 +68,7 @@ export default class VirtualNetwork extends compose(BaseModel, Filterable) {
     return {
       role: this.$extras.pivot_role,
       virtual_ip: this.$extras.pivot_virtual_ip,
+      last_seen: this.$extras?.pivot_last_seen,
       users_count: this.$extras.users_count ? parseInt(this.$extras.users_count) : undefined,
       devices_count: this.$extras.devices_count ? parseInt(this.$extras.devices_count) : undefined,
     }
