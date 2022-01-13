@@ -9,8 +9,8 @@ export default class DevicesController {
     const data = await request.validate({
       schema: schema.create({
         name: schema.string({ trim: true }, [rules.required(), rules.maxLength(255)]),
-        hardware_uuid: schema.string({ trim: true }, [rules.required(), rules.uuid()]),
-        os: schema.string({ trim: true }, [rules.required(), rules.maxLength(100)]),
+        hardware_uuid: schema.string({ trim: true }, [rules.required()]),
+        platform: schema.string({ trim: true }, [rules.required(), rules.maxLength(100)]),
       }),
       reporter: CustomReporter,
     })
@@ -27,7 +27,7 @@ export default class DevicesController {
       userId: auth.user!.id,
       name: data.name,
       hardwareId: data.hardware_uuid.toLowerCase(),
-      platform: data.os,
+      platform: data.platform,
     })
 
     return response.format(200, device)

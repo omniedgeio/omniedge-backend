@@ -22,86 +22,143 @@ import Route from '@ioc:Adonis/Core/Route'
 
 Route.group(() => {
   Route.group(() => {
-    Route.post('/register', 'AuthController.register')
-    Route.post('/register/resend', 'AuthController.resendVerifyEmail')
-    Route.get('/register/activate', 'AuthController.activateAccount')
-    Route.post('/login/google', 'AuthController.loginWithGoogle')
-    Route.post('/login/password', 'AuthController.loginWithPassword')
-    Route.post('/login/security-key', 'AuthController.loginWithSecurityKey')
-    Route.post('/reset-password/code', 'AuthController.resetPasswordWithCode')
-    Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
-    Route.post('/forget', 'AuthController.forgetPassword')
-
-    // Features
-    Route.post('/verify-email', 'AuthController.verifyEmail')
-  }).prefix('/auth')
-
-  Route.group(() => {
     Route.group(() => {
-      Route.get('/', 'ProfilesController.index')
-      Route.put('/', 'ProfilesController.update')
-      Route.put('/change-password', 'ProfilesController.changePassword')
-    }).prefix('/profile')
+      Route.post('/register', 'AuthController.register')
+      Route.post('/register/resend', 'AuthController.resendVerifyEmail')
+      Route.get('/register/activate', 'AuthController.activateAccount')
+      Route.post('/login/google', 'AuthController.loginWithGoogle')
+      Route.post('/login/password', 'AuthController.loginWithPassword')
+      Route.post('/login/security-key', 'AuthController.loginWithSecurityKey')
+      Route.post('/reset-password/code', 'AuthController.resetPasswordWithCode')
+      Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
+      Route.post('/forget', 'AuthController.forgetPassword')
+
+      // Features
+      Route.post('/verify-email', 'AuthController.verifyEmail')
+    }).prefix('/auth')
 
     Route.group(() => {
-      Route.post('/', 'VirtualNetworksController.create')
-      Route.get('/', 'VirtualNetworksController.list')
-      Route.get('/:id', 'VirtualNetworksController.retrieve')
-      Route.put('/:id', 'VirtualNetworksController.update')
-      Route.delete('/:id', 'VirtualNetworksController.delete')
+      Route.group(() => {
+        Route.get('/', 'ProfilesController.index')
+        Route.put('/', 'ProfilesController.update')
+        Route.put('/change-password', 'ProfilesController.changePassword')
+      }).prefix('/profile')
 
       Route.group(() => {
-        Route.get('/', 'VirtualNetworksController.listUsers')
-        Route.put('/:user_id', 'VirtualNetworksController.updateUser')
-        Route.delete('/:user_id', 'VirtualNetworksController.deleteUser')
-      }).prefix('/:id/users')
+        Route.post('/', 'VirtualNetworksController.create')
+        Route.get('/', 'VirtualNetworksController.list')
+        Route.get('/:id', 'VirtualNetworksController.retrieve')
+        Route.put('/:id', 'VirtualNetworksController.update')
+        Route.delete('/:id', 'VirtualNetworksController.delete')
+
+        Route.group(() => {
+          Route.get('/', 'VirtualNetworksController.listUsers')
+          Route.put('/:user_id', 'VirtualNetworksController.updateUser')
+          Route.delete('/:user_id', 'VirtualNetworksController.deleteUser')
+        }).prefix('/:id/users')
+
+        Route.group(() => {
+          Route.get('/', 'VirtualNetworksController.listDevices')
+          Route.delete('/:device_id', 'VirtualNetworksController.deleteDevice')
+          Route.post('/:device_id', 'VirtualNetworksController.joinDevice')
+        }).prefix('/:id/devices')
+
+        Route.group(() => {
+          Route.post('/', 'VirtualNetworksController.createInvitation')
+          Route.get('/', 'VirtualNetworksController.listInvitations')
+          Route.delete('/:invitation_id', 'VirtualNetworksController.deleteInvitation')
+        }).prefix('/:id/invitations')
+      }).prefix('/virtual-networks')
 
       Route.group(() => {
-        Route.get('/', 'VirtualNetworksController.listDevices')
-        Route.delete('/:device_id', 'VirtualNetworksController.deleteDevice')
-        Route.post('/:device_id', 'VirtualNetworksController.joinDevice')
-      }).prefix('/:id/devices')
+        Route.post('/', 'InvitationsController.create')
+        Route.get('/', 'InvitationsController.list')
+        Route.delete('/:invitation_id', 'InvitationsController.delete')
+      }).prefix('/invitations')
 
       Route.group(() => {
-        Route.post('/', 'VirtualNetworksController.createInvitation')
-        Route.get('/', 'VirtualNetworksController.listInvitations')
-        Route.delete('/:invitation_id', 'VirtualNetworksController.deleteInvitation')
-      }).prefix('/:id/invitations')
-    }).prefix('/virtual-networks')
+        Route.post('/', 'DevicesController.register')
+        Route.get('/', 'DevicesController.list')
+        Route.get('/:id', 'DevicesController.retrieve')
+        Route.put('/:id', 'DevicesController.update')
+        Route.delete('/:id', 'DevicesController.delete')
+      }).prefix('/devices')
+
+      Route.group(() => {
+        Route.post('/', 'SecurityKeysController.create')
+        Route.get('/', 'SecurityKeysController.list')
+        Route.get('/:id', 'SecurityKeysController.retrieve')
+        Route.put('/:id', 'SecurityKeysController.update')
+        Route.delete('/:id', 'SecurityKeysController.delete')
+      }).prefix('/security-keys')
+
+      Route.group(() => {
+        Route.get('/', 'ServersController.list')
+      }).prefix('servers')
+
+      Route.group(() => {
+        Route.post('/portal-session', 'PaymentsController.createPortalSession')
+        Route.post('/checkout-session', 'PaymentsController.createCheckoutSession')
+      }).prefix('/payment')
+    }).middleware('auth')
 
     Route.group(() => {
-      Route.post('/', 'InvitationsController.create')
-      Route.get('/', 'InvitationsController.list')
-      Route.delete('/:invitation_id', 'InvitationsController.delete')
-    }).prefix('/invitations')
-
-    Route.group(() => {
-      Route.post('/', 'DevicesController.register')
-      Route.get('/', 'DevicesController.list')
-      Route.get('/:id', 'DevicesController.retrieve')
-      Route.put('/:id', 'DevicesController.update')
-      Route.delete('/:id', 'DevicesController.delete')
-    }).prefix('/devices')
-
-    Route.group(() => {
-      Route.post('/', 'SecurityKeysController.create')
-      Route.get('/', 'SecurityKeysController.list')
-      Route.get('/:id', 'SecurityKeysController.retrieve')
-      Route.put('/:id', 'SecurityKeysController.update')
-      Route.delete('/:id', 'SecurityKeysController.delete')
-    }).prefix('/security-keys')
-
-    Route.group(() => {
-      Route.get('/', 'ServersController.list')
-    }).prefix('servers')
-
-    Route.group(() => {
-      Route.post('/portal-session', 'PaymentsController.createPortalSession')
-      Route.post('/checkout-session', 'PaymentsController.createCheckoutSession')
+      Route.post('/webhook', 'PaymentsController.stripeWebhook')
     }).prefix('/payment')
-  }).middleware('auth')
+  }).prefix('/v2')
 
+  /* -------------------------------------------------------------------------- */
+  /*                                   V1 API                                   */
+  /* -------------------------------------------------------------------------- */
   Route.group(() => {
-    Route.post('/webhook', 'PaymentsController.stripeWebhook')
-  }).prefix('/payment')
+    Route.group(() => {
+      Route.post('/register', 'AuthController.register')
+      Route.post('/login/google', 'v1/AuthController.loginWithGoogle')
+      Route.post('/login/password', 'v1/AuthController.loginWithPassword')
+      Route.post('/login/security-key', 'v1/AuthController.loginWithSecurityKey')
+      Route.post('/reset-password/code', 'AuthController.resetPasswordWithCode')
+      Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
+
+      Route.get('/login/session', 'v1/AuthController.generateSession')
+    }).prefix('/auth')
+
+    Route.group(() => {
+      Route.group(() => {
+        Route.get('/profile', 'ProfilesController.index')
+        Route.post('/profile', 'ProfilesController.update')
+        Route.put('/auth/change-password', 'ProfilesController.changePassword')
+      }).prefix('/user')
+
+      Route.group(() => {
+        Route.post('/', 'VirtualNetworksController.create')
+        Route.get('/', 'v1/VirtualNetworksController.list')
+        Route.get('/:id', 'v1/VirtualNetworksController.retrieve')
+        Route.put('/:id', 'VirtualNetworksController.update')
+        Route.delete('/:id', 'VirtualNetworksController.delete')
+
+        Route.group(() => {
+          Route.delete('/:user_id', 'VirtualNetworksController.deleteUser')
+        }).prefix('/:id/users')
+
+        Route.group(() => {
+          Route.delete('/:device_id', 'VirtualNetworksController.deleteDevice')
+          Route.post('/:device_id/join', 'VirtualNetworksController.joinDevice')
+        }).prefix('/:id/devices')
+      }).prefix('/virtual-networks')
+
+      // Route.group(() => {
+      //   Route.post('/', 'InvitationsController.create')
+      //   Route.get('/', 'InvitationsController.list')
+      //   Route.delete('/:invitation_id', 'InvitationsController.delete')
+      // }).prefix('/invitations')
+
+      Route.group(() => {
+        Route.post('/register', 'DevicesController.register')
+        Route.get('/', 'v1/DevicesController.list')
+        Route.get('/:id', 'DevicesController.retrieve')
+        Route.put('/:id', 'DevicesController.update')
+        Route.delete('/:id', 'DevicesController.delete')
+      }).prefix('/devices')
+    }).middleware('auth')
+  }).prefix('/v1')
 }).prefix('/api')
