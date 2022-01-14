@@ -9,6 +9,7 @@ import UserVirtualNetwork from 'App/Models/UserVirtualNetwork'
 import VirtualNetwork from 'App/Models/VirtualNetwork'
 import VirtualNetworkDevice from 'App/Models/VirtualNetworkDevice'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
+import crypto from 'crypto'
 import geoip from 'geoip-lite'
 import { DateTime } from 'luxon'
 import { InvitationStatus, UserRole } from './../../../contracts/enum'
@@ -342,37 +343,49 @@ export default class VirtualNetworksController {
       .where('virtual_networks.id', params.id)
       .first()
 
-    const device = await auth.user?.related('devices').query().where('devices.id', params.device_id).first()
-
     if (!virtualNetwork) {
       return response.format(404, 'Virtual network not found')
     }
+
+    const device = await auth.user?.related('devices').query().where('devices.id', params.device_id).first()
 
     if (!device) {
       return response.format(404, 'Device not found')
     }
 
-    if (!(await auth.user?.isAdminOf(virtualNetwork))) {
-      return response.format(403, 'You are not authorized to delete device')
-    }
+    const virtualNetworkDevices = await VirtualNetworkDevice.query()
+      .where('virtual_network_id', params.id)
+      .select('virtual_ip')
+    const usedIPs = virtualNetworkDevices.map((device) => device.virtualIp)
 
-    const vnDevices = await VirtualNetworkDevice.query().where('virtual_network_id', params.id)
-
-    const usedIps: string[] = []
-    for (let i = 0; i < vnDevices.length; i++) {
-      usedIps.push(vnDevices[i].virtualIp)
-      if (vnDevices[i].deviceId === params.device_id) {
-        return response.format(400, 'Device already in virtual network')
+    const virtualNetworkDevice = await VirtualNetworkDevice.firstOrCreate(
+      {
+        deviceId: device.id,
+        virtualNetworkId: virtualNetwork.id,
+      },
+      {
+        virtualIp: this.nextUnassignedIP(virtualNetwork, usedIPs),
+        lastSeen: DateTime.now(),
       }
-    }
+    )
 
-    const virtualNetworkDevice = await VirtualNetworkDevice.firstOrCreate({
-      deviceId: params.device_id,
-      virtualNetworkId: params.id,
-      virtualIp: this.nextUnassignedIP(virtualNetwork, usedIps),
-      lastSeen: DateTime.now(),
+    await virtualNetwork.load('server')
+
+    const communityName = crypto.createHash('sha256').update(virtualNetwork.id).digest('hex').slice(0, 8)
+    const secretKey = crypto.createHash('sha256').update(communityName).digest('hex').slice(0, 8)
+    const netmask = new Netmask(virtualNetwork.ipRange)
+
+    return response.format(200, {
+      community_name: communityName,
+      secret_key: secretKey,
+      virtual_ip: virtualNetworkDevice.virtualIp,
+      subnet_mask: netmask.mask,
+      server: {
+        name: virtualNetwork.server.name,
+        host: virtualNetwork.server.host,
+        country: virtualNetwork.server.country,
+      },
     })
-    await virtualNetworkDevice.save()
 
     return response.format(200, 'Join device successfully')
   }
