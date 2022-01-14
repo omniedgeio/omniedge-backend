@@ -29,16 +29,14 @@ export default class AuthController {
 
   public async notifySession({ ws, request, auth, response }: HttpContextContract) {
     const authSchema = schema.create({
-      auth_session_uuid: schema.string.optional(),
+      auth_session_uuid: schema.string(),
     })
     const user = auth.user!
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
     const token = await auth.use('jwt').generate(user!!, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
-    if (payload.auth_session_uuid) {
-      ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
-    }
+    ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
     response.format(200, token)
   }
 
