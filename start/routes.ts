@@ -100,6 +100,9 @@ Route.group(() => {
         Route.post('/portal-session', 'PaymentsController.createPortalSession')
         Route.post('/checkout-session', 'PaymentsController.createCheckoutSession')
       }).prefix('/payment')
+
+      // For v1.api
+      Route.post('/auth/login/session/notify', 'v1/AuthController.notifySession')
     }).middleware('auth')
 
     Route.group(() => {
