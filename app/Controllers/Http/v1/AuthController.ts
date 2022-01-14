@@ -37,21 +37,23 @@ export default class AuthController {
         }),
       ]),
       password: schema.string({ trim: true }),
-      auth_session_uuid: schema.string(),
+      auth_session_uuid: schema.string.optional(),
     })
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
     const token = await auth.attempt(payload.email, payload.password, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
     console.log(payload.auth_session_uuid)
-    ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
+    if (payload.auth_session_uuid) {
+      ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
+    }
     response.format(200, token)
   }
 
   public async loginWithSecurityKey({ ws, request, response, auth }: HttpContextContract) {
     const authSchema = schema.create({
       key: schema.string({ trim: true }),
-      auth_session_uuid: schema.string(),
+      auth_session_uuid: schema.string.optional(),
     })
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
     const keyLstr = payload.key.substring(0, 16)
@@ -63,7 +65,9 @@ export default class AuthController {
           expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
         })
         response.format(200, token)
-        ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
+        if (payload.auth_session_uuid) {
+          ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
+        }
         return
       }
     }
@@ -79,7 +83,7 @@ export default class AuthController {
   public async loginWithGoogle({ ws, request, response, auth }: HttpContextContract) {
     const authSchema = schema.create({
       id_token: schema.string({ trim: true }),
-      auth_session_uuid: schema.string(),
+      auth_session_uuid: schema.string.optional(),
     })
     const requestPayload = await request.validate({ schema: authSchema, reporter: CustomReporter })
     const googlePayload = await this.verifyGoogleIdToken(requestPayload.id_token)
@@ -97,7 +101,9 @@ export default class AuthController {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })
       response.format(200, token)
-      ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken)
+      if (requestPayload.auth_session_uuid) {
+        ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken)
+      }
       return
     }
     const user = await User.findBy('email', googlePayload?.email)
@@ -128,7 +134,9 @@ export default class AuthController {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })
       response.format(200, token)
-      ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken)
+      if (requestPayload.auth_session_uuid) {
+        ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken)
+      }
     } else {
       response.formatError(
         403,
