@@ -159,6 +159,8 @@ Route.group(() => {
         Route.put('/:id', 'DevicesController.update')
         Route.delete('/:id', 'DevicesController.delete')
       }).prefix('/devices')
+
+      Route.post('/auth/login/session/notify', 'v1/AuthController.notifySession')
     }).middleware('auth')
   }).prefix('/v1')
 }).prefix('/api')
