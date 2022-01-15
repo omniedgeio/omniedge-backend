@@ -1,7 +1,6 @@
-import { BaseModel, beforeCreate, column, HasMany, hasMany } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, column, HasMany, hasMany } from '@ioc:Adonis/Lucid/Orm'
 import User from 'App/Models/User'
 import { DateTime } from 'luxon'
-import { modelId } from './../../utils/nanoid'
 import PlanLimit from './PlanLimit'
 
 export default class Plan extends BaseModel {
@@ -28,9 +27,4 @@ export default class Plan extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
-
-  @beforeCreate()
-  public static async createID(model: Plan) {
-    model.id = 'plan_' + modelId()
-  }
 }
