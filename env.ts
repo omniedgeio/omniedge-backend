@@ -44,4 +44,9 @@ export default Env.rules({
   // cognito
   COGNITO_USER_POOL_ID: Env.schema.string(),
   COGNITO_APP_CLIENT_ID: Env.schema.string(),
+
+  // aws
+  AWS_REGION: Env.schema.string(),
+  AWS_ACCESS_KEY_ID: Env.schema.string(),
+  AWS_SECRET_ACCESS_KEY: Env.schema.string(),
 })

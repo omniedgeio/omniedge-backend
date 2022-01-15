@@ -47,6 +47,10 @@ export default class AppProvider {
 
     AWS.config = new AWS.Config({
       region: Env.get('AWS_REGION'),
+      credentials: new AWS.Credentials({
+        accessKeyId: Env.get('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: Env.get('AWS_SECRET_ACCESS_KEY'),
+      }),
     })
   }
 

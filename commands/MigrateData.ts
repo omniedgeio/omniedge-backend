@@ -46,9 +46,6 @@ export default class MigrateData extends BaseCommand {
   private userPoolId = 'us-east-2_aokgDq2Kh'
 
   public async run() {
-    AWS.config = new AWS.Config({
-      region: 'us-east-2',
-    })
     await this.syncAllUsers()
     await this.syncAllVirtualNetworks()
     await this.syncAllDevices()
