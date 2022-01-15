@@ -19,8 +19,8 @@ import { generateToken, verifyToken } from '../../../utils/jwt'
 
 // todo all login check user status!=blocked
 export default class AuthController {
-  private static activateEndpoint = '/api/auth/register/activate?token='
-  private static resetPasswordEndpoint = '/api/auth/reset-password/verify?token='
+  private static activateEndpoint = '/auth/register/activate?token='
+  private static resetPasswordEndpoint = '/auth/reset-password/verify?token='
 
   /**
    * happy path: user register -> [inactive user] -> send email -> user click the email -> [active user]
