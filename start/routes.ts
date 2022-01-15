@@ -116,6 +116,7 @@ Route.group(() => {
   Route.group(() => {
     Route.group(() => {
       Route.post('/register', 'AuthController.register')
+      Route.get('/register/activate', 'AuthController.activateAccount')
       Route.post('/login/google', 'v1/AuthController.loginWithGoogle')
       Route.post('/login/password', 'v1/AuthController.loginWithPassword')
       Route.post('/login/security-key', 'v1/AuthController.loginWithSecurityKey')
