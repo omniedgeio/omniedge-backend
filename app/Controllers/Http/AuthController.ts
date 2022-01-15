@@ -5,16 +5,19 @@ import Hash from '@ioc:Adonis/Core/Hash'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Logger from '@ioc:Adonis/Core/Logger'
 import { rules, schema } from '@ioc:Adonis/Core/Validator'
-import Database from '@ioc:Adonis/Lucid/Database'
+import Database, { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import AuthException from 'App/Exceptions/AuthException'
 import Identity from 'App/Models/Identity'
 import Plan from 'App/Models/Plan'
 import SecurityKey from 'App/Models/SecurityKey'
+import Server from 'App/Models/Server'
 import User from 'App/Models/User'
+import VirtualNetwork from 'App/Models/VirtualNetwork'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import AWS from 'aws-sdk'
-import { AuthType, UserStatus } from 'Contracts/enum'
+import { AuthType, UserRole, UserStatus } from 'Contracts/enum'
 import { default as omniedge, default as omniedgeConfig } from 'Contracts/omniedge'
+import geoip from 'geoip-lite'
 import { OAuth2Client, TokenPayload } from 'google-auth-library'
 import { ErrorCode } from '../../../utils/constant'
 import { generateToken, verifyToken } from '../../../utils/jwt'
@@ -59,6 +62,7 @@ export default class AuthController {
     user.status = UserStatus.Inactive
     user.planId = freePlan ? freePlan.id : null
     const resUser = await User.create(user)
+    await this.createDefaultVirtualNetwork(resUser, request.ip())
     response.status(200)
     if (resUser.$isPersisted) {
       response.format(200, resUser)
@@ -288,6 +292,7 @@ export default class AuthController {
       await Database.transaction(async (tx) => {
         newGoogleUser.useTransaction(tx)
         const dbGoogleUser = await newGoogleUser.save()
+        await this.createDefaultVirtualNetwork(dbGoogleUser, request.ip(), tx)
         newGoogleUser.id = dbGoogleUser.id
         identity.userId = dbGoogleUser.id
         identity.useTransaction(tx)
@@ -420,5 +425,36 @@ export default class AuthController {
 
   private async verifyActivateToken(token: string): Promise<JWTCustomPayload> {
     return verifyToken(token, omniedgeConfig.key.activateAccountKey)
+  }
+
+  private async createDefaultVirtualNetwork(user: User, ip: string, tx?: TransactionClientContract): Promise<void> {
+    const virtualNetwork = new VirtualNetwork()
+    if (tx) virtualNetwork.useTransaction(tx)
+    virtualNetwork.fill({
+      name: 'My Omni Network',
+      ipRange: '100.100.0.0/10',
+    })
+
+    const location = geoip.lookup(ip)
+    Logger.debug('request ip is %s', ip)
+    let server: Server | null
+    if (location && location.timezone.includes('Asia')) {
+      server = await Server.findBy('country', 'HK')
+    } else if (location && location.timezone.includes('Europe')) {
+      server = await Server.findBy('country', 'DE')
+    } else {
+      server = await Server.findBy('country', 'US')
+    }
+
+    if (server) {
+      virtualNetwork.serverId = server.id
+    }
+
+    await virtualNetwork.save()
+    await user.related('virtualNetworks').attach({
+      [virtualNetwork.id]: {
+        role: UserRole.Admin,
+      },
+    })
   }
 }
