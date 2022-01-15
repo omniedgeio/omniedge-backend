@@ -1,5 +1,6 @@
 import { JWTCustomPayload } from '@ioc:Adonis/Addons/Jwt'
 import Mail from '@ioc:Adonis/Addons/Mail'
+import Env from '@ioc:Adonis/Core/Env'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Logger from '@ioc:Adonis/Core/Logger'
@@ -11,6 +12,7 @@ import Plan from 'App/Models/Plan'
 import SecurityKey from 'App/Models/SecurityKey'
 import User from 'App/Models/User'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
+import AWS from 'aws-sdk'
 import { AuthType, UserStatus } from 'Contracts/enum'
 import { default as omniedge, default as omniedgeConfig } from 'Contracts/omniedge'
 import { OAuth2Client, TokenPayload } from 'google-auth-library'
@@ -179,6 +181,36 @@ export default class AuthController {
       password: schema.string({ trim: true }),
     })
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
+
+    // Cognito
+    const user = await User.findBy('email', payload.email)
+    if (user?.cognitoId) {
+      const cognitoISP = new AWS.CognitoIdentityServiceProvider()
+      try {
+        const cognitoAuth = await cognitoISP
+          .adminInitiateAuth({
+            AuthFlow: 'ADMIN_NO_SRP_AUTH',
+            ClientId: Env.get('COGNITO_APP_CLIENT_ID'),
+            UserPoolId: Env.get('COGNITO_USER_POOL_ID'),
+            AuthParameters: {
+              USERNAME: user.cognitoId,
+              PASSWORD: payload.password,
+            },
+          })
+          .promise()
+
+        if (cognitoAuth.AuthenticationResult) {
+          user.password = payload.password
+          await user.save()
+        } else {
+          return response.formatError(401, ErrorCode.auth.E_EMAIL_PASSWORD_NOT_MATCH, 'Invalid credentials')
+        }
+      } catch (err) {
+        Logger.error(err.message)
+        return response.formatError(401, ErrorCode.auth.E_EMAIL_PASSWORD_NOT_MATCH, 'Invalid credentials')
+      }
+    }
+
     const token = await auth.attempt(payload.email, payload.password, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
