@@ -105,6 +105,12 @@ export default class User extends compose(BaseModel, Filterable) {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
 
+  @column()
+  public ddbUUID: string
+
+  @column()
+  public cognitoId: string
+
   @beforeSave()
   public static async hashPassword(user: User) {
     if (user.$dirty.password) {

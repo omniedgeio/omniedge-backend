@@ -40,4 +40,8 @@ export default Env.rules({
   STRIPE_API_VERSION: Env.schema.string(),
 
   CLIENT_URL: Env.schema.string(),
+
+  // cognito
+  COGNITO_USER_POOL_ID: Env.schema.string(),
+  COGNITO_APP_CLIENT_ID: Env.schema.string(),
 })

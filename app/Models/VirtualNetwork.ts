@@ -59,6 +59,9 @@ export default class VirtualNetwork extends compose(BaseModel, Filterable) {
   @column.dateTime({ autoCreate: true, autoUpdate: true, serializeAs: null })
   public updatedAt: DateTime
 
+  @column()
+  public ddbUUID: string
+
   @beforeCreate()
   public static async createID(model: VirtualNetwork) {
     model.id = 'vnw_' + modelId()
