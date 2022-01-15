@@ -1,5 +1,6 @@
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import WebsocketService from 'App/Services/WebSocketService'
+import AWS from 'aws-sdk'
 
 export default class AppProvider {
   constructor(protected app: ApplicationContract) {}
@@ -40,6 +41,12 @@ export default class AppProvider {
         message: message,
         errors: { ...errors },
       })
+    })
+
+    const Env = this.app.container.use('Adonis/Core/Env')
+
+    AWS.config = new AWS.Config({
+      region: Env.get('AWS_REGION'),
     })
   }
 

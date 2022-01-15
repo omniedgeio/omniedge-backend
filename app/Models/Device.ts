@@ -41,6 +41,9 @@ export default class Device extends compose(BaseModel, Filterable) {
   @column.dateTime({ autoCreate: true, autoUpdate: true, serializeAs: null })
   public updatedAt: DateTime
 
+  @column()
+  public ddbUUID: string
+
   @beforeCreate()
   public static async createID(model: Device) {
     model.id = 'dev_' + modelId()
