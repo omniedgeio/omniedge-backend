@@ -241,6 +241,10 @@ export default class AuthController {
       newGoogleUser.password = ''
       newGoogleUser.picture = googlePayload?.picture ?? ''
       newGoogleUser.status = UserStatus.Active
+
+      const freePlan = await Plan.findBy('slug', 'free')
+      newGoogleUser.planId = freePlan ? freePlan.id : null
+
       Logger.info('New google user %o, original payload is %o', newGoogleUser, googlePayload)
 
       const identity = new Identity()

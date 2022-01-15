@@ -6,6 +6,7 @@ import { rules, schema } from '@ioc:Adonis/Core/Validator'
 import Database from '@ioc:Adonis/Lucid/Database'
 import AuthException from 'App/Exceptions/AuthException'
 import Identity from 'App/Models/Identity'
+import Plan from 'App/Models/Plan'
 import SecurityKey from 'App/Models/SecurityKey'
 import User from 'App/Models/User'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
@@ -127,6 +128,8 @@ export default class AuthController {
       newGoogleUser.password = ''
       newGoogleUser.picture = googlePayload?.picture ?? ''
       newGoogleUser.status = UserStatus.Active
+      const freePlan = await Plan.findBy('slug', 'free')
+      newGoogleUser.planId = freePlan ? freePlan.id : null
       Logger.info('New google user %o, original payload is %o', newGoogleUser, googlePayload)
 
       const identity = new Identity()
