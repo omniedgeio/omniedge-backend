@@ -24,8 +24,8 @@ import { generateToken, verifyToken } from '../../../utils/jwt'
 
 // todo all login check user status!=blocked
 export default class AuthController {
-  private activateEndpoint = (token) => Env.get('CLIENT_URL') + '/email_verification?token=' + token
-  private static resetPasswordEndpoint = '/auth/reset-password/verify?token='
+  private activateEndpoint = (token) => omniedge.clientUrl + '/email_verification?token=' + token
+  private resetPasswordEndpoint = (token) => omniedge.clientUrl + '/forgot-password/verify?code=' + token
 
   /**
    * happy path: user register -> [inactive user] -> send email -> user click the email -> [active user]
@@ -307,7 +307,7 @@ export default class AuthController {
       response.formatError(
         403,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
-        'The email which your google account binds is used in the system'
+        'The email which your google account binds is used in the system',
       )
     }
   }
@@ -338,7 +338,7 @@ export default class AuthController {
           .subject('Forget Password')
           .htmlView('emails/forget', {
             name: user.name,
-            uri: omniedgeConfig.mail.baseUrl + AuthController.resetPasswordEndpoint + forgetPasswordToken,
+            uri: this.resetPasswordEndpoint(forgetPasswordToken),
           })
       })
       response.format(200, '')
@@ -354,6 +354,7 @@ export default class AuthController {
       password: schema.string({ trim: true }),
     })
     const requestPayload = await request.validate({ schema: authSchema, reporter: CustomReporter })
+
     let jwtPayload: JWTCustomPayload | undefined
     try {
       jwtPayload = await this.verifyForgetPasswordToken(requestPayload.token)
@@ -398,14 +399,14 @@ export default class AuthController {
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: email',
-        null
+        null,
       )
     } else if (!payload.sub) {
       throw new AuthException(
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: sub',
-        null
+        null,
       )
     } else {
       return payload

@@ -19,6 +19,7 @@ import { OAuth2Client, TokenPayload } from 'google-auth-library'
 import { DateTime } from 'luxon'
 import { ErrorCode } from '../../../../utils/constant'
 import { nanoid } from '../../../../utils/nanoid'
+import omniedge from 'Contracts/omniedge'
 
 export default class AuthController {
   public async generateSession({ ws, response }: HttpContextContract) {
@@ -27,7 +28,7 @@ export default class AuthController {
     ws.createAuthSession(id, expiredAt)
     return response.format(200, {
       id: id,
-      auth_url: Env.get('CLIENT_URL') + '/login?auth_session_uuid=' + id,
+      auth_url: omniedge.clientUrl + '/login?auth_session_uuid=' + id,
       expired_at: expiredAt,
     })
   }
@@ -191,7 +192,7 @@ export default class AuthController {
       response.formatError(
         403,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
-        'The email which your google account binds is used in the system'
+        'The email which your google account binds is used in the system',
       )
     }
   }
@@ -211,14 +212,14 @@ export default class AuthController {
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: email',
-        null
+        null,
       )
     } else if (!payload.sub) {
       throw new AuthException(
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: sub',
-        null
+        null,
       )
     } else {
       return payload
