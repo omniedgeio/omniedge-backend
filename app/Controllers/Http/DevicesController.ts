@@ -19,7 +19,7 @@ export default class DevicesController {
 
     const limit = await user.getLimit('devices')
     const devicesCount = await Device.query().where('user_id', user.id).count('* as count')
-    if (devicesCount[0].$extras.count >= limit) {
+    if (parseInt(devicesCount[0].$extras.count) >= limit) {
       return response.format(400, 'You have reached the limit of devices')
     }
 

@@ -36,7 +36,7 @@ export default class VirtualNetworksController {
     const user = auth.user!
     const limit = await user.getLimit('virtual-networks')
     const virtualNetworksCount = await user.related('virtualNetworks').query().count('* as count')
-    if (virtualNetworksCount[0].$extras.count >= limit) {
+    if (parseInt(virtualNetworksCount[0].$extras.count) >= limit) {
       return response.format(400, 'You have reached the limit of virtual networks')
     }
 
