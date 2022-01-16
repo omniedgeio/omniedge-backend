@@ -61,7 +61,7 @@ export default class AuthController {
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
 
     const user = await User.findBy('email', payload.email)
-    if (user?.cognitoId) {
+    if (user?.cognitoId && !user.password) {
       const cognitoISP = new AWS.CognitoIdentityServiceProvider()
       try {
         const cognitoAuth = await cognitoISP
