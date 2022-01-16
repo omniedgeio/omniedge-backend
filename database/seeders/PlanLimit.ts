@@ -37,7 +37,7 @@ export default class PlanLimitSeeder extends BaseSeeder {
       },
     ])
 
-    const team = await Plan.findBy('slug', 'team')
+    const team = await Plan.findBy('slug', 'teams')
 
     team?.related('limits').createMany([
       {
