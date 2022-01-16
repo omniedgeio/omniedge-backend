@@ -29,9 +29,8 @@ Route.group(() => {
       Route.post('/login/google', 'AuthController.loginWithGoogle')
       Route.post('/login/password', 'AuthController.loginWithPassword')
       Route.post('/login/security-key', 'AuthController.loginWithSecurityKey')
-      Route.post('/reset-password/code', 'AuthController.resetPasswordWithCode')
+      Route.post('/reset-password/code', 'AuthController.forgetPassword')
       Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
-      Route.post('/forget', 'AuthController.forgetPassword')
 
       // Features
       Route.post('/verify-email', 'AuthController.verifyEmail')
@@ -120,7 +119,7 @@ Route.group(() => {
       Route.post('/login/google', 'v1/AuthController.loginWithGoogle')
       Route.post('/login/password', 'v1/AuthController.loginWithPassword')
       Route.post('/login/security-key', 'v1/AuthController.loginWithSecurityKey')
-      Route.post('/reset-password/code', 'AuthController.resetPasswordWithCode')
+      Route.post('/reset-password/code', 'AuthController.forgetPassword')
       Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
 
       Route.get('/login/session', 'v1/AuthController.generateSession')

@@ -6,6 +6,7 @@ import Plan from 'App/Models/Plan'
 import User from 'App/Models/User'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import { Stripe as StripeType } from 'stripe'
+import omniedge from 'Contracts/omniedge'
 
 export default class PaymentsController {
   public async createPortalSession({ response, auth }: HttpContextContract) {
@@ -15,7 +16,7 @@ export default class PaymentsController {
     }
     const session = await Stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: Env.get('CLIENT_URL') + '/dashboard/billing',
+      return_url: omniedge.clientUrl + '/dashboard/billing',
     })
 
     return response.format(200, {
@@ -111,8 +112,8 @@ export default class PaymentsController {
             quantity: 1,
           },
         ],
-        success_url: Env.get('CLIENT_URL') + '/dashboard/billing',
-        cancel_url: Env.get('CLIENT_URL') + '/dashboard/billing',
+        success_url: omniedge.clientUrl + '/dashboard/billing',
+        cancel_url: omniedge.clientUrl + '/dashboard/billing',
       })
       return response.format(200, {
         url: session.url,
@@ -129,7 +130,7 @@ export default class PaymentsController {
       const event = await Stripe.webhooks.constructEvent(
         request.raw() as string,
         sig as string,
-        Env.get('STRIPE_WEBHOOK_KEY')
+        Env.get('STRIPE_WEBHOOK_KEY'),
       )
       if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
         const subscription = event.data.object as StripeType.Subscription

@@ -2,6 +2,7 @@ import Env from '@ioc:Adonis/Core/Env'
 import { rules } from '@ioc:Adonis/Core/Validator'
 
 const omniedgeConfig = {
+  clientUrl: Env.get('CLIENT_URL') as string,
   key: {
     signAlg: 'HS512',
     activateAccountKey: Env.get('JWT_PRIVATE_KEY').replace(/\\n/g, '\n'),
@@ -12,7 +13,6 @@ const omniedgeConfig = {
   mail: {
     senderAddress: Env.get('SES_SENDER_ADDRESS') as string,
     senderName: Env.get('SES_SENDER_NAME') as string,
-    baseUrl: Env.get('EMAIL_BASE_URL') as string,
   },
   rules: {
     nameRules: [rules.minLength(1), rules.maxLength(60)],
