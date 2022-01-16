@@ -24,7 +24,7 @@ import { generateToken, verifyToken } from '../../../utils/jwt'
 
 // todo all login check user status!=blocked
 export default class AuthController {
-  private static activateEndpoint = '/auth/register/activate?token='
+  private activateEndpoint = (token) => Env.get('CLIENT_URL') + '/email_verification?token=' + token
   private static resetPasswordEndpoint = '/auth/reset-password/verify?token='
 
   /**
@@ -77,7 +77,7 @@ export default class AuthController {
         .subject('Welcome to Omniedge')
         .htmlView('emails/welcome', {
           name: user.name,
-          uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
+          uri: this.activateEndpoint(emailToken),
         })
     })
   }
@@ -108,6 +108,7 @@ export default class AuthController {
     }
     const emailToken = await this.generateActivateToken(user.email!!)
     try {
+      console.log(this.activateEndpoint(emailToken))
       await Mail.use().send((message) => {
         message
           .from(omniedgeConfig.mail.senderAddress, omniedgeConfig.mail.senderName)
@@ -115,7 +116,7 @@ export default class AuthController {
           .subject('Welcome to Omniedge')
           .htmlView('emails/welcome', {
             name: user.name,
-            uri: omniedgeConfig.mail.baseUrl + AuthController.activateEndpoint + emailToken,
+            uri: this.activateEndpoint(emailToken),
           })
       })
       response.format(200, '')
