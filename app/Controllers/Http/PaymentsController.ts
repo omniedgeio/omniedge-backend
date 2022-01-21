@@ -5,8 +5,8 @@ import { schema } from '@ioc:Adonis/Core/Validator'
 import Plan from 'App/Models/Plan'
 import User from 'App/Models/User'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
-import { Stripe as StripeType } from 'stripe'
 import omniedge from 'Contracts/omniedge'
+import { Stripe as StripeType } from 'stripe'
 
 export default class PaymentsController {
   public async createPortalSession({ response, auth }: HttpContextContract) {
@@ -104,6 +104,7 @@ export default class PaymentsController {
     try {
       const session = await Stripe.checkout.sessions.create({
         customer: user.stripeCustomerId,
+        allow_promotion_codes: true,
         payment_method_types: ['card'],
         mode: 'subscription',
         line_items: [
@@ -130,7 +131,7 @@ export default class PaymentsController {
       const event = await Stripe.webhooks.constructEvent(
         request.raw() as string,
         sig as string,
-        Env.get('STRIPE_WEBHOOK_KEY'),
+        Env.get('STRIPE_WEBHOOK_KEY')
       )
       if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
         const subscription = event.data.object as StripeType.Subscription
