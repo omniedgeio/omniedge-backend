@@ -125,6 +125,26 @@ const authConfig: AuthConfig = {
         model: () => import('App/Models/User'),
       },
     },
+    admin: {
+      driver: 'jwt',
+      signAlg: 'HS512',
+      privateKey: Env.get('ADMIN_JWT_PRIVATE_KEY', '').replace(/\\n/g, '\n'),
+      persistJwt: false,
+      jwtDefaultExpire: '5days',
+      refreshTokenDefaultExpire: '14days',
+      tokenProvider: {
+        type: 'api',
+        driver: 'database',
+        table: 'jwt_tokens',
+        foreignKey: 'user_id',
+      },
+      provider: {
+        driver: 'lucid',
+        identifierKey: 'id',
+        uids: ['email', 'id'],
+        model: () => import('App/Models/User'),
+      },
+    },
   },
 } as AuthConfig
 
