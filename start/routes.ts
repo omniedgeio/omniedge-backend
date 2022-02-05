@@ -167,3 +167,12 @@ Route.group(() => {
     }).middleware('auth')
   }).prefix('/v1')
 }).prefix('/api')
+
+
+Route.group(() => {
+  Route.get('/plan/count', 'AdminsController.planCount')
+  Route.get('/user/count', 'AdminsController.userCount')
+  Route.get('/device/count', 'AdminsController.deviceCount')
+  Route.get('/vn/count', 'AdminsController.virtualNetworkCount')
+  Route.get('/user/info', 'AdminsController.userInfo')
+}).prefix('/api/v2/admin')
