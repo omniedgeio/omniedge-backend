@@ -162,7 +162,7 @@ export default class AuthController {
     }
     switch (user.status) {
       case UserStatus.Active:
-        response.formatError(400, ErrorCode.auth.E_USER_ACTIVATED, 'User is already activated')
+        response.format(200, 'User is already activated')
         return
       case UserStatus.Blocked:
         response.formatError(403, ErrorCode.auth.E_USER_BLOCKED, 'User is blocked')

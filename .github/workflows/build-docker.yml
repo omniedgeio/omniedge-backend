@@ -3,8 +3,8 @@ name: omniedge compile
 on:
   push:
     branches:
+      - dev
       - main
-      - release
 
 jobs:
   build:
