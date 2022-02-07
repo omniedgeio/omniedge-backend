@@ -49,4 +49,7 @@ export default Env.rules({
   AWS_REGION: Env.schema.string(),
   AWS_ACCESS_KEY_ID: Env.schema.string(),
   AWS_SECRET_ACCESS_KEY: Env.schema.string(),
+
+  // lark
+  LARK_WEBHOOK_URL: Env.schema.string(),
 })
