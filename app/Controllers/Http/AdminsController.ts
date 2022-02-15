@@ -1,47 +1,49 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import { RequestContract } from '@ioc:Adonis/Core/Request'
+import { ResponseContract } from '@ioc:Adonis/Core/Response'
 import { schema } from '@ioc:Adonis/Core/Validator'
+import { LucidModel } from '@ioc:Adonis/Lucid/Orm'
+import Device from 'App/Models/Device'
+import Plan from 'App/Models/Plan'
 import User from 'App/Models/User'
+import UserVirtualNetwork from 'App/Models/UserVirtualNetwork'
+import VirtualNetwork from 'App/Models/VirtualNetwork'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import { DateTime } from 'luxon'
-import Device from 'App/Models/Device'
-import VirtualNetwork from 'App/Models/VirtualNetwork'
-import { ResponseContract } from '@ioc:Adonis/Core/Response'
-import { LucidModel } from '@ioc:Adonis/Lucid/Orm'
-import { RequestContract } from '@ioc:Adonis/Core/Request'
-import UserVirtualNetwork from 'App/Models/UserVirtualNetwork'
-import { AuthContract } from '@ioc:Adonis/Addons/Auth'
 
 export default class AdminsController {
-
-  public async planCount({ auth, request, response }: HttpContextContract) {
-    await this.checkAdmin(auth)
+  public async planCount({ request, response }: HttpContextContract) {
     const requestSchema = schema.create({
-      start: schema.date.optional({ format: 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' }),
-      end: schema.date.optional({ format: 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' }),
+      start: schema.date.optional({ format: "yyyy-MM-dd'T'HH:mm:ss.SSSZ" }),
+      end: schema.date.optional({ format: "yyyy-MM-dd'T'HH:mm:ss.SSSZ" }),
     })
     const payload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
     let queryRes: User[]
     if (payload.start == null) {
-      queryRes = await User.query().select('plan_id').groupBy('plan_id')
-        .count('plan_id as plan_count')
+      queryRes = await User.query().select('plan_id').groupBy('plan_id').count('plan_id as plan_count')
     } else if (payload.end == null) {
-      queryRes = await User.query().select('plan_id').groupBy('plan_id')
+      queryRes = await User.query()
+        .select('plan_id')
+        .groupBy('plan_id')
         .count('plan_id as plan_count')
         .whereBetween('created_at', [payload.start.toString(), DateTime.now().toString()])
     } else {
-      queryRes = await User.query().select('plan_id').groupBy('plan_id')
+      queryRes = await User.query()
+        .select('plan_id')
+        .groupBy('plan_id')
         .count('plan_id as plan_count')
         .whereBetween('created_at', [payload.start.toString(), payload.end.toString()])
     }
     const result = {}
-    queryRes.forEach(element => {
-      result[element.$original.planId] = element.$extras.plan_count
-    })
+    for (const element of queryRes) {
+      const plan = await Plan.find(element.planId)
+      if (!plan) continue
+      result[plan.title] = element.$extras.plan_count
+    }
     response.format(200, result)
   }
 
-  public async userInfo({ auth, request, response }: HttpContextContract) {
-    await this.checkAdmin(auth)
+  public async userInfo({ request, response }: HttpContextContract) {
     const requestSchema = schema.create({
       email: schema.string(),
     })
@@ -51,14 +53,10 @@ export default class AdminsController {
       throw new Error('User not found')
     }
 
-    const vnInfo = await UserVirtualNetwork.query()
-      .count('* as count')
-      .where('user_id', user.id)
+    const vnInfo = await UserVirtualNetwork.query().count('* as count').where('user_id', user.id)
     const vnCount = vnInfo[0].$extras.count
 
-    const deviceInfo = await Device.query()
-      .count('* as count')
-      .where('user_id', user.id)
+    const deviceInfo = await Device.query().count('* as count').where('user_id', user.id)
     const deviceCount = deviceInfo[0].$extras.count
 
     const result = {
@@ -73,37 +71,22 @@ export default class AdminsController {
     response.format(200, result)
   }
 
-  public async userCount({ auth, request, response }: HttpContextContract) {
-    await this.checkAdmin(auth)
+  public async userCount({ request, response }: HttpContextContract) {
     await this.count(request, response, User)
   }
 
-  public async deviceCount({ auth, request, response }: HttpContextContract) {
-    await this.checkAdmin(auth)
+  public async deviceCount({ request, response }: HttpContextContract) {
     await this.count(request, response, Device)
   }
 
-  public async virtualNetworkCount({ auth, request, response }: HttpContextContract) {
-    await this.checkAdmin(auth)
+  public async virtualNetworkCount({ request, response }: HttpContextContract) {
     await this.count(request, response, VirtualNetwork)
-  }
-
-  private async checkAdmin(auth: AuthContract) {
-    const user = await auth.use('admin').authenticate()
-    if (user == null) {
-      throw new Error('Not admin')
-    }
-    const payload = await auth.use('admin').payload
-    console.log(payload)
-    if (!payload || !payload.user || payload!!.user.name != 'admin') {
-      throw new Error('Not admin')
-    }
   }
 
   private async count(request: RequestContract, response: ResponseContract, model: LucidModel) {
     const requestSchema = schema.create({
-      start: schema.date.optional({ format: 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' }),
-      end: schema.date.optional({ format: 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' }),
+      start: schema.date.optional(),
+      end: schema.date.optional(),
     })
     const payload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
     if (payload.start == null) {
@@ -111,16 +94,17 @@ export default class AdminsController {
       const count = res[0].$extras.count
       response.format(200, count)
     } else if (payload.end == null) {
-      const counts = await model.query()
+      const counts = await model
+        .query()
         .count('* as count')
         .whereBetween('created_at', [payload.start.toString(), DateTime.now().toString()])
       response.format(200, counts[0].$extras.count)
     } else {
-      const counts = await model.query()
+      const counts = await model
+        .query()
         .count('* as count')
         .whereBetween('created_at', [payload.start.toString(), payload.end.toString()])
       response.format(200, counts[0].$extras.count)
     }
   }
 }
-
