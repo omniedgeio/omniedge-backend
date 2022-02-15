@@ -12,18 +12,6 @@
       "aliases": [],
       "flags": []
     },
-    "update:lark": {
-      "settings": {
-        "loadApp": true,
-        "stayAlive": true
-      },
-      "commandPath": "./commands/UpdateToLark",
-      "commandName": "update:lark",
-      "description": "",
-      "args": [],
-      "aliases": [],
-      "flags": []
-    },
     "dump:rcfile": {
       "settings": {},
       "commandPath": "@adonisjs/core/build/commands/DumpRc",
