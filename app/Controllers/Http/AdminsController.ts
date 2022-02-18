@@ -76,7 +76,43 @@ export default class AdminsController {
   }
 
   public async deviceCount({ request, response }: HttpContextContract) {
-    await this.count(request, response, Device)
+    const requestSchema = schema.create({
+      start: schema.date.optional(),
+      end: schema.date.optional(),
+    })
+    const payload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
+    const query = Device.query()
+    if (payload.start) {
+      query.where('created_at', '>=', payload.start.toString())
+    }
+    if (payload.end) {
+      query.where('created_at', '<=', payload.end.toString())
+    }
+
+    let total = 0
+    const result = await query.select('platform').count('* as count').groupBy('platform')
+
+    const platforms = ['Windows', 'MacOS', 'Linux', 'Android', 'iOS', 'Others']
+    const counts: any = platforms.reduce((acc, curr) => {
+      acc[curr] = 0
+      return acc
+    }, {})
+
+    result.forEach((item) => {
+      const platform =
+        platforms.find((platform) => item.platform.toLowerCase().includes(platform.toLowerCase())) ||
+        platforms[platforms.length - 1]
+      counts[platform] += parseInt(item.$extras.count)
+      total += parseInt(item.$extras.count)
+    })
+
+    return {
+      total: total,
+      platforms: Object.entries(counts).map(([key, value]) => ({
+        name: key,
+        count: value,
+      })),
+    }
   }
 
   public async virtualNetworkCount({ request, response }: HttpContextContract) {
