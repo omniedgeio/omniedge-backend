@@ -13,7 +13,7 @@ import crypto from 'crypto'
 import geoip from 'geoip-lite'
 import { DateTime } from 'luxon'
 import { Netmask } from 'netmask'
-import { nextUnassignedIP } from 'utils/ip'
+import { nextUnassignedIP } from '../../../utils/ip'
 import { InvitationStatus, UserRole } from './../../../contracts/enum'
 
 export default class VirtualNetworksController {

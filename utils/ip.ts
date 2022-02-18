@@ -4,6 +4,11 @@ export function getAvailableIPRange(first: number, last: number, usedIPsLong: nu
   const availableIPRange: number[][] = []
   usedIPsLong.sort((a, b) => a - b)
 
+  if (usedIPsLong.length == 0) {
+    availableIPRange.push([first, last])
+    return availableIPRange
+  }
+
   if (usedIPsLong[0] !== first) {
     availableIPRange.push([first, usedIPsLong[0] - 1])
   }
