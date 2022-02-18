@@ -52,4 +52,9 @@ export default Env.rules({
 
   // admin api
   ADMIN_API_KEY: Env.schema.string(),
+
+  // mautic api
+  MAUTIC_URL: Env.schema.string(),
+  MAUTIC_USERNAME: Env.schema.string(),
+  MAUTIC_PASSWORD: Env.schema.string(),
 })

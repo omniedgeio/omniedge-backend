@@ -15,6 +15,7 @@ import User from 'App/Models/User'
 import VirtualNetwork from 'App/Models/VirtualNetwork'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import AWS from 'aws-sdk'
+import axios from 'axios'
 import { AuthType, UserRole, UserStatus } from 'Contracts/enum'
 import { default as omniedge, default as omniedgeConfig } from 'Contracts/omniedge'
 import geoip from 'geoip-lite'
@@ -80,6 +81,7 @@ export default class AuthController {
           uri: this.activateEndpoint(emailToken),
         })
     })
+    this.sendContactToMautic(user)
   }
 
   public async resendVerifyEmail({ request, response }: HttpContextContract) {
@@ -456,6 +458,23 @@ export default class AuthController {
     await user.related('virtualNetworks').attach({
       [virtualNetwork.id]: {
         role: UserRole.Admin,
+      },
+    })
+  }
+
+  private async sendContactToMautic(user: User): Promise<void> {
+    if (Env.get('NODE_ENV') !== 'production') return
+    await axios({
+      method: 'POST',
+      url: Env.get('MAUTIC_URL') + '/api/contacts/new',
+      headers: {
+        Authorization:
+          'Basic ' + Buffer.from(Env.get('MAUTIC_USERNAME') + ':' + Env.get('MAUTIC_PASSWORD')).toString('base64'),
+      },
+      data: {
+        firstname: user.name,
+        email: user.email,
+        tag: 'omniedge-backend',
       },
     })
   }
