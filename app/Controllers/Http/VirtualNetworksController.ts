@@ -12,11 +12,9 @@ import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import crypto from 'crypto'
 import geoip from 'geoip-lite'
 import { DateTime } from 'luxon'
+import { Netmask } from 'netmask'
+import { nextUnassignedIP } from 'utils/ip'
 import { InvitationStatus, UserRole } from './../../../contracts/enum'
-
-const Netmask = require('netmask').Netmask
-const long2ip = require('netmask').long2ip
-const ip2long = require('netmask').ip2long
 
 export default class VirtualNetworksController {
   public async create({ request, response, auth }: HttpContextContract) {
@@ -358,13 +356,18 @@ export default class VirtualNetworksController {
       .select('virtual_ip')
     const usedIPs = virtualNetworkDevices.map((device) => device.virtualIp)
 
+    const nextIP = nextUnassignedIP(virtualNetwork.ipRange, usedIPs)
+    if (!nextIP) {
+      return response.format(400, 'No available IPs')
+    }
+
     const virtualNetworkDevice = await VirtualNetworkDevice.firstOrCreate(
       {
         deviceId: device.id,
         virtualNetworkId: virtualNetwork.id,
       },
       {
-        virtualIp: this.nextUnassignedIP(virtualNetwork, usedIPs),
+        virtualIp: nextIP,
         lastSeen: DateTime.now(),
       }
     )
@@ -489,18 +492,5 @@ export default class VirtualNetworksController {
     await invitation.delete()
 
     return response.format(200, 'Deleted invitation successfully')
-  }
-
-  // next unassigned virtual ip
-  private nextUnassignedIP(vn: VirtualNetwork, usedIps: string[]): string {
-    const block = new Netmask(vn.ipRange)
-    const first = ip2long(block.first)
-    for (let i = 0; i < block.size; i++) {
-      const t = first + i
-      if (usedIps.indexOf(long2ip(t)) < 0) {
-        return long2ip(t)
-      }
-    }
-    return ''
   }
 }
