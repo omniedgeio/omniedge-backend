@@ -14,12 +14,12 @@ import VirtualNetwork from 'App/Models/VirtualNetwork'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import AWS from 'aws-sdk'
 import { AuthType, UserRole, UserStatus } from 'Contracts/enum'
+import omniedge from 'Contracts/omniedge'
 import geoip from 'geoip-lite'
 import { OAuth2Client, TokenPayload } from 'google-auth-library'
 import { DateTime } from 'luxon'
 import { ErrorCode } from '../../../../utils/constant'
 import { nanoid } from '../../../../utils/nanoid'
-import omniedge from 'Contracts/omniedge'
 
 export default class AuthController {
   public async generateSession({ ws, response }: HttpContextContract) {
@@ -192,7 +192,7 @@ export default class AuthController {
       response.formatError(
         403,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
-        'The email which your google account binds is used in the system',
+        'The email which your google account binds is used in the system'
       )
     }
   }
@@ -212,14 +212,14 @@ export default class AuthController {
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: email',
-        null,
+        null
       )
     } else if (!payload.sub) {
       throw new AuthException(
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: sub',
-        null,
+        null
       )
     } else {
       return payload
@@ -231,7 +231,7 @@ export default class AuthController {
     if (tx) virtualNetwork.useTransaction(tx)
     virtualNetwork.fill({
       name: 'My Omni Network',
-      ipRange: '100.100.0.0/10',
+      ipRange: '100.100.0.0/24',
     })
 
     const location = geoip.lookup(ip)
