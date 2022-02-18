@@ -3,7 +3,7 @@ name: omniedge prod deploy
 on:
   push:
     branches:
-      - prod
+      - main
   workflow_dispatch:
 
 jobs:
