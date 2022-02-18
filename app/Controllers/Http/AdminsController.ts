@@ -75,7 +75,7 @@ export default class AdminsController {
     await this.count(request, response, User)
   }
 
-  public async deviceCount({ request, response }: HttpContextContract) {
+  public async deviceCount({ request }: HttpContextContract) {
     const requestSchema = schema.create({
       start: schema.date.optional(),
       end: schema.date.optional(),
