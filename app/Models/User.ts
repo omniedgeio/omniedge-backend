@@ -15,7 +15,7 @@ import {
   manyToMany,
 } from '@ioc:Adonis/Lucid/Orm'
 import { DateTime } from 'luxon'
-import { UserRole, UserStatus } from './../../contracts/enum'
+import { UsageKey, UserRole, UserStatus } from './../../contracts/enum'
 import { modelId } from './../../utils/nanoid'
 import Device from './Device'
 import UserFilter from './Filters/UserFilter'
@@ -149,7 +149,7 @@ export default class User extends compose(BaseModel, Filterable) {
     return stripeSubscription
   }
 
-  public async getLimit(key: string): Promise<number> {
+  public async getLimit(key: UsageKey): Promise<number> {
     if (!this.planId) return 0
     const userLimit = await UserLimit.query().where('user_id', this.id).where('key', key).first()
     if (!userLimit) {
@@ -160,5 +160,16 @@ export default class User extends compose(BaseModel, Filterable) {
       return planLimit.defaultLimit
     }
     return userLimit?.limit
+  }
+
+  public async getUsage(key: UsageKey): Promise<number> {
+    if (key === UsageKey.VirtualNetworks) {
+      const virtualNetworksCount = await UserVirtualNetwork.query().where('user_id', this.id).count('* as count')
+      return parseInt(virtualNetworksCount[0].$extras.count)
+    } else if (key === UsageKey.Devices) {
+      const devicesCount = await Device.query().where('user_id', this.id).count('* as count')
+      return parseInt(devicesCount[0].$extras.count)
+    }
+    return Number.POSITIVE_INFINITY
   }
 }
