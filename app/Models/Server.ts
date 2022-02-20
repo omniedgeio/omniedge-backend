@@ -1,6 +1,7 @@
 import { BaseModel, beforeCreate, BelongsTo, belongsTo, column, HasMany, hasMany } from '@ioc:Adonis/Lucid/Orm'
 import { Country } from 'Contracts/enum'
 import { DateTime } from 'luxon'
+import { ServerType } from './../../contracts/enum'
 import { modelId } from './../../utils/nanoid'
 import User from './User'
 import VirtualNetwork from './VirtualNetwork'
@@ -10,19 +11,16 @@ export default class Server extends BaseModel {
   public id: string
 
   @column()
-  public name: string
+  public name: string | null
 
   @column()
   public host: string
 
   @column()
+  public type: ServerType
+
+  @column()
   public country: Country | null
-
-  @column({ serializeAs: null })
-  public userId: string | null
-
-  @belongsTo(() => User)
-  public user: BelongsTo<typeof User>
 
   @hasMany(() => VirtualNetwork)
   public virtualNetworks: HasMany<typeof VirtualNetwork>
