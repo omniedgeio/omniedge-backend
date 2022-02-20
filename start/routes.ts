@@ -72,7 +72,7 @@ Route.group(() => {
       Route.group(() => {
         Route.post('/', 'InvitationsController.create')
         Route.get('/', 'InvitationsController.list')
-        Route.delete('/:invitation_id', 'InvitationsController.delete')
+        Route.put('/:invitation_id', 'InvitationsController.update')
       }).prefix('/invitations')
 
       Route.group(() => {
