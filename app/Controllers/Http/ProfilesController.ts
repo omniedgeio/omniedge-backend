@@ -1,6 +1,7 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { rules, schema } from '@ioc:Adonis/Core/Validator'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
+import { UsageKey } from 'Contracts/enum'
 import Omniedge from 'Contracts/omniedge'
 import { DateTime } from 'luxon'
 import { ErrorCode } from '../../../utils/constant'
@@ -12,6 +13,17 @@ export default class ProfilesController {
     await user.load('identities')
 
     const subscription = await user.getStripeSubcription()
+
+    const usageLimits = {
+      devices: {
+        limit: await user.getLimit(UsageKey.Devices),
+        usage: await user.getUsage(UsageKey.Devices),
+      },
+      virtual_networks: {
+        limit: await user.getLimit(UsageKey.VirtualNetworks),
+        usage: await user.getUsage(UsageKey.VirtualNetworks),
+      },
+    }
 
     response.format(200, {
       id: user.id,
@@ -26,6 +38,7 @@ export default class ProfilesController {
         end_at: subscription?.current_period_end && DateTime.fromSeconds(subscription?.current_period_end),
         cancel_at: subscription?.cancel_at && DateTime.fromSeconds(subscription?.cancel_at),
       },
+      usage_limits: usageLimits,
     })
   }
 
