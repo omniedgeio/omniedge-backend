@@ -1,8 +1,9 @@
-import { BaseModel, beforeCreate, column, HasMany, hasMany } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, beforeCreate, BelongsTo, belongsTo, column, HasMany, hasMany } from '@ioc:Adonis/Lucid/Orm'
 import { Country } from 'Contracts/enum'
 import { DateTime } from 'luxon'
 import { ServerType } from './../../contracts/enum'
 import { modelId } from './../../utils/nanoid'
+import User from './User'
 import VirtualNetwork from './VirtualNetwork'
 
 export default class Server extends BaseModel {
