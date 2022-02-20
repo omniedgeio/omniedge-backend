@@ -1,18 +1,19 @@
 import BaseSchema from '@ioc:Adonis/Lucid/Schema'
+import { ServerType } from 'Contracts/enum'
 
-export default class AddUserIdToServers extends BaseSchema {
+export default class AddTypeToServersTables extends BaseSchema {
   protected tableName = 'servers'
 
   public async up() {
     this.schema.alterTable(this.tableName, (table) => {
-      table.string('user_id').references('id').inTable('users').nullable()
-      table.setNullable('country')
+      table.tinyint('type').notNullable().defaultTo(ServerType.Default)
+      table.string('name').alter()
     })
   }
 
   public async down() {
     this.schema.alterTable(this.tableName, (table) => {
-      table.dropColumn('user_id')
+      table.dropColumn('type')
     })
   }
 }

@@ -14,7 +14,7 @@ import geoip from 'geoip-lite'
 import { DateTime } from 'luxon'
 import { Netmask } from 'netmask'
 import { nextUnassignedIP } from '../../../utils/ip'
-import { InvitationStatus, UsageKey, UserRole } from './../../../contracts/enum'
+import { InvitationStatus, ServerType, UsageKey, UserRole } from './../../../contracts/enum'
 
 export default class VirtualNetworksController {
   hostnameWithPortRegex = '([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:[0-9]{1,5})|([a-z]+.[a-z]+.[a-z]+:[0-9]{1,5})'
@@ -26,9 +26,8 @@ export default class VirtualNetworksController {
         name: schema.string({ trim: true }, [rules.maxLength(255)]),
         ip_range: schema.string({ trim: true }, [rules.regex(new RegExp(v4str))]),
         server: schema.object.optional().members({
-          name: schema.string({ trim: true }, [rules.maxLength(255)]),
-          host: schema.string({ trim: true }, [rules.hostname()]),
-          port: schema.number([rules.range(1, 65535)]),
+          host: schema.string.optional({ trim: true }, [rules.hostname()]),
+          port: schema.number.optional([rules.range(1, 65535)]),
         }),
       }),
       messages: {
@@ -55,19 +54,20 @@ export default class VirtualNetworksController {
       const location = geoip.lookup(data.server.host)
       server = await Server.create({
         host: `${data.server.host}:${data.server.port || 7787}`,
-        name: data.server.name,
+        name: 'Custom server',
         country: location ? location.country : null,
-        userId: user.id,
+        type: ServerType.SelfHosted,
       })
     } else {
       const location = geoip.lookup(request.ip())
       Logger.debug('request ip is %s', request.ip())
+      let query = Server.query().where('type', ServerType.Default)
       if (location && location.timezone.includes('Asia')) {
-        server = await Server.query().where('country', 'HK').whereNull('user_id').first()
+        server = await query.where('country', 'HK').first()
       } else if (location && location.timezone.includes('Europe')) {
-        server = await Server.query().where('country', 'DE').whereNull('user_id').first()
+        server = await query.where('country', 'DE').first()
       } else {
-        server = await Server.query().where('country', 'US').whereNull('user_id').first()
+        server = await query.where('country', 'US').first()
       }
     }
 
@@ -136,6 +136,10 @@ export default class VirtualNetworksController {
     const data = await request.validate({
       schema: schema.create({
         name: schema.string({ trim: true }, [rules.maxLength(255)]),
+        server: schema.object.optional().members({
+          host: schema.string.optional({ trim: true }, [rules.hostname()]),
+          port: schema.number.optional([rules.range(1, 65535)]),
+        }),
       }),
       reporter: CustomReporter,
     })
@@ -150,8 +154,28 @@ export default class VirtualNetworksController {
       return response.format(404, 'Virtual network not found')
     }
 
+    if (data.server?.host) {
+      await virtualNetwork.load('server')
+      const server = virtualNetwork.server
+      if (server.type === ServerType.SelfHosted) {
+        server.host = `${data.server.host}:${data.server.port || 7787}`
+        await server.save()
+      } else {
+        const location = geoip.lookup(data.server.host)
+        const newServer = await Server.create({
+          host: `${data.server.host}:${data.server.port || 7787}`,
+          name: 'Custom server',
+          country: location ? location.country : null,
+          type: ServerType.SelfHosted,
+        })
+        virtualNetwork.serverId = newServer.id
+      }
+    }
+
     virtualNetwork.name = data.name
     await virtualNetwork.save()
+
+    await virtualNetwork.load('server')
 
     return response.format(200, virtualNetwork)
   }
@@ -160,6 +184,7 @@ export default class VirtualNetworksController {
     const virtualNetwork = await auth.user
       ?.related('virtualNetworks')
       .query()
+      .preload('server')
       .where('virtual_networks.id', params.id)
       .first()
 
@@ -175,6 +200,10 @@ export default class VirtualNetworksController {
       await VirtualNetworkDevice.query({ client: trx }).where('virtual_network_id', params.id).delete()
 
       await virtualNetwork.useTransaction(trx).delete()
+
+      if (virtualNetwork.server.type === ServerType.SelfHosted) {
+        await virtualNetwork.server.useTransaction(trx).delete()
+      }
     })
 
     return response.format(200, 'Virtual network deleted')
