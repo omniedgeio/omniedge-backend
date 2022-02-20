@@ -26,7 +26,6 @@ export default class VirtualNetworksController {
         name: schema.string({ trim: true }, [rules.maxLength(255)]),
         ip_range: schema.string({ trim: true }, [rules.regex(new RegExp(v4str))]),
         server: schema.object.optional().members({
-          name: schema.string({ trim: true }, [rules.maxLength(255)]),
           host: schema.string({ trim: true }, [rules.hostname()]),
           port: schema.number([rules.range(1, 65535)]),
         }),
@@ -55,7 +54,7 @@ export default class VirtualNetworksController {
       const location = geoip.lookup(data.server.host)
       server = await Server.create({
         host: `${data.server.host}:${data.server.port || 7787}`,
-        name: data.server.name,
+        name: 'Custom Server',
         country: location ? location.country : null,
         userId: user.id,
       })
