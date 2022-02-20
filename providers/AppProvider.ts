@@ -10,38 +10,40 @@ export default class AppProvider {
   }
 
   public async boot() {
-    // IoC container is ready
-    const wss = new WebsocketService()
+    if (this.app.environment == 'web') {
+      // IoC container is ready
+      const wss = new WebsocketService()
 
-    const HttpContext = this.app.container.use('Adonis/Core/HttpContext')
+      const HttpContext = this.app.container.use('Adonis/Core/HttpContext')
 
-    HttpContext.getter('ws', function location() {
-      return wss
-    })
-
-    const Response = this.app.container.use('Adonis/Core/Response')
-
-    Response.macro('format', function (status, data) {
-      return this.status(status).json({
-        code: status,
-        ...(typeof data === 'string' ? { message: data } : { data }),
+      HttpContext.getter('ws', function location() {
+        return wss
       })
-    })
 
-    Response.macro('formatError', function (status, code, message) {
-      return this.status(status).json({
-        code: code,
-        message: message,
-      })
-    })
+      const Response = this.app.container.use('Adonis/Core/Response')
 
-    Response.macro('formatError', function (status, code, message, errors) {
-      return this.status(status).json({
-        code: code,
-        message: message,
-        errors: { ...errors },
+      Response.macro('format', function (status, data) {
+        return this.status(status).json({
+          code: status,
+          ...(typeof data === 'string' ? { message: data } : { data }),
+        })
       })
-    })
+
+      Response.macro('formatError', function (status, code, message) {
+        return this.status(status).json({
+          code: code,
+          message: message,
+        })
+      })
+
+      Response.macro('formatError', function (status, code, message, errors) {
+        return this.status(status).json({
+          code: code,
+          message: message,
+          errors: { ...errors },
+        })
+      })
+    }
 
     const Env = this.app.container.use('Adonis/Core/Env')
 
