@@ -14,7 +14,7 @@ import geoip from 'geoip-lite'
 import { DateTime } from 'luxon'
 import { Netmask } from 'netmask'
 import { nextUnassignedIP } from '../../../utils/ip'
-import { InvitationStatus, UserRole } from './../../../contracts/enum'
+import { InvitationStatus, UsageKey, UserRole } from './../../../contracts/enum'
 
 export default class VirtualNetworksController {
   public async create({ request, response, auth }: HttpContextContract) {
@@ -32,9 +32,10 @@ export default class VirtualNetworksController {
     })
 
     const user = auth.user!
-    const limit = await user.getLimit('virtual-networks')
-    const virtualNetworksCount = await user.related('virtualNetworks').query().count('* as count')
-    if (parseInt(virtualNetworksCount[0].$extras.count) >= limit) {
+    const limit = await user.getLimit(UsageKey.VirtualNetworks)
+    const usage = await user.getUsage(UsageKey.VirtualNetworks)
+
+    if (usage >= limit) {
       return response.format(400, 'You have reached the limit of virtual networks')
     }
 

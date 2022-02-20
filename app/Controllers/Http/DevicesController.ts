@@ -3,6 +3,7 @@ import { rules, schema } from '@ioc:Adonis/Core/Validator'
 import Device from 'App/Models/Device'
 import VirtualNetworkDevice from 'App/Models/VirtualNetworkDevice'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
+import { UsageKey } from 'Contracts/enum'
 
 export default class DevicesController {
   public async register({ request, response, auth }: HttpContextContract) {
@@ -17,9 +18,9 @@ export default class DevicesController {
 
     const user = auth.user!
 
-    const limit = await user.getLimit('devices')
-    const devicesCount = await Device.query().where('user_id', user.id).count('* as count')
-    if (parseInt(devicesCount[0].$extras.count) >= limit) {
+    const limit = await user.getLimit(UsageKey.Devices)
+    const usage = await user.getUsage(UsageKey.Devices)
+    if (usage >= limit) {
       return response.format(400, 'You have reached the limit of devices')
     }
 
