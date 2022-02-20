@@ -17,6 +17,7 @@ import { nextUnassignedIP } from '../../../utils/ip'
 import { InvitationStatus, UsageKey, UserRole } from './../../../contracts/enum'
 
 export default class VirtualNetworksController {
+  hostnameWithPortRegex = '([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:[0-9]{1,5})|([a-z]+.[a-z]+.[a-z]+:[0-9]{1,5})'
   public async create({ request, response, auth }: HttpContextContract) {
     const v4str =
       '(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}\\/(3[0-2]|[12]?[0-9])'
@@ -24,9 +25,15 @@ export default class VirtualNetworksController {
       schema: schema.create({
         name: schema.string({ trim: true }, [rules.maxLength(255)]),
         ip_range: schema.string({ trim: true }, [rules.regex(new RegExp(v4str))]),
+        server: schema.object.optional().members({
+          name: schema.string({ trim: true }, [rules.maxLength(255)]),
+          host: schema.string({ trim: true }, [rules.hostname()]),
+          port: schema.number([rules.range(1, 65535)]),
+        }),
       }),
       messages: {
         'ip_range.regex': 'Invalid IP range',
+        'server.host.regex': 'Invalid hostname',
       },
       reporter: CustomReporter,
     })
@@ -42,19 +49,32 @@ export default class VirtualNetworksController {
     const virtualNetwork = new VirtualNetwork()
     virtualNetwork.fill(data)
 
-    const location = geoip.lookup(request.ip())
-    Logger.debug('request ip is %s', request.ip())
     let server: Server | null
-    if (location && location.timezone.includes('Asia')) {
-      server = await Server.findBy('country', 'HK')
-    } else if (location && location.timezone.includes('Europe')) {
-      server = await Server.findBy('country', 'DE')
+
+    if (data.server?.host) {
+      const location = geoip.lookup(data.server.host)
+      server = await Server.create({
+        host: `${data.server.host}:${data.server.port || 7787}`,
+        name: data.server.name,
+        country: location ? location.country : null,
+        userId: user.id,
+      })
     } else {
-      server = await Server.findBy('country', 'US')
+      const location = geoip.lookup(request.ip())
+      Logger.debug('request ip is %s', request.ip())
+      if (location && location.timezone.includes('Asia')) {
+        server = await Server.query().where('country', 'HK').whereNull('user_id').first()
+      } else if (location && location.timezone.includes('Europe')) {
+        server = await Server.query().where('country', 'DE').whereNull('user_id').first()
+      } else {
+        server = await Server.query().where('country', 'US').whereNull('user_id').first()
+      }
     }
 
     if (server) {
       virtualNetwork.serverId = server.id
+    } else {
+      return response.format(400, 'No server available')
     }
 
     await virtualNetwork.save()

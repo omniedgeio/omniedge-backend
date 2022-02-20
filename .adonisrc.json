@@ -24,6 +24,12 @@
         "web",
         "console"
       ]
+    },
+    {
+      "file": "./start/validator",
+      "environment": [
+        "web"
+      ]
     }
   ],
   "providers": [
