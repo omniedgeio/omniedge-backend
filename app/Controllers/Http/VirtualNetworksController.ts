@@ -194,6 +194,7 @@ export default class VirtualNetworksController {
 
         if (chosenServer) {
           virtualNetwork.serverId = chosenServer.id
+          await virtualNetwork.save()
           await server.delete()
         }
       }
