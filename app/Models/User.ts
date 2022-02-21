@@ -140,6 +140,12 @@ export default class User extends compose(BaseModel, Filterable) {
     return !!userVirtualNetwork
   }
 
+  public async isFreePlan(): Promise<boolean> {
+    if (!this.planId) return true
+    const plan = await Plan.find(this.planId)
+    return plan?.slug === 'free'
+  }
+
   public async getStripeSubcription() {
     if (!this.stripeSubscriptionId) {
       return null
