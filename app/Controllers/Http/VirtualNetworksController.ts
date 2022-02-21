@@ -158,12 +158,13 @@ export default class VirtualNetworksController {
       return response.format(404, 'Virtual network not found')
     }
 
+    await virtualNetwork.load('server')
+    const server = virtualNetwork.server
+
     if (data.server?.host) {
       if (await user.isFreePlan()) {
         return response.format(400, 'Please upgrade your plan to support customized supernode')
       }
-      await virtualNetwork.load('server')
-      const server = virtualNetwork.server
       if (server.type === ServerType.SelfHosted) {
         server.host = `${data.server.host}:${data.server.port || 7787}`
         await server.save()
@@ -176,6 +177,25 @@ export default class VirtualNetworksController {
           type: ServerType.SelfHosted,
         })
         virtualNetwork.serverId = newServer.id
+      }
+    } else {
+      if (server.type === ServerType.SelfHosted) {
+        await server.delete()
+        let chosenServer
+        const location = geoip.lookup(request.ip())
+        Logger.debug('request ip is %s', request.ip())
+        let query = Server.query().where('type', ServerType.Default)
+        if (location && location.timezone.includes('Asia')) {
+          chosenServer = await query.where('country', 'HK').first()
+        } else if (location && location.timezone.includes('Europe')) {
+          chosenServer = await query.where('country', 'DE').first()
+        } else {
+          chosenServer = await query.where('country', 'US').first()
+        }
+
+        if (chosenServer) {
+          virtualNetwork.serverId = chosenServer.id
+        }
       }
     }
 
