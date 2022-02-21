@@ -20,6 +20,7 @@ import { AuthType, UserRole, UserStatus } from 'Contracts/enum'
 import { default as omniedge, default as omniedgeConfig } from 'Contracts/omniedge'
 import geoip from 'geoip-lite'
 import { OAuth2Client, TokenPayload } from 'google-auth-library'
+import { DateTime } from 'luxon'
 import { ErrorCode } from '../../../utils/constant'
 import { generateToken, verifyToken } from '../../../utils/jwt'
 
@@ -218,6 +219,12 @@ export default class AuthController {
       }
     }
 
+    if (!user) {
+      return response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
+    }
+    user.lastLoginAt = DateTime.now()
+    await user.save()
+
     const token = await auth.attempt(payload.email, payload.password, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
@@ -234,6 +241,13 @@ export default class AuthController {
     for (let sk of sks) {
       if (await Hash.verify(sk.key, payload.key)) {
         const user = await User.find(sk.userId)
+
+        if (!user) {
+          return response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
+        }
+        user.lastLoginAt = DateTime.now()
+        await user.save()
+
         const token = await auth.use('jwt').generate(user!!, {
           expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
         })
@@ -266,6 +280,9 @@ export default class AuthController {
     // user has logged in the system before
     if (identity) {
       const user = await User.findOrFail(identity.userId)
+      user.lastLoginAt = DateTime.now()
+      await user.save()
+
       const token = await auth.use('jwt').generate(user, {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })
@@ -297,10 +314,13 @@ export default class AuthController {
         const dbGoogleUser = await newGoogleUser.save()
         await this.createDefaultVirtualNetwork(dbGoogleUser, request.ip(), tx)
         newGoogleUser.id = dbGoogleUser.id
+        newGoogleUser.lastLoginAt = DateTime.now()
+        await newGoogleUser.save()
         identity.userId = dbGoogleUser.id
         identity.useTransaction(tx)
         await identity.save()
       })
+
       const token = await auth.use('jwt').generate(newGoogleUser, {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })

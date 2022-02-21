@@ -88,6 +88,12 @@ export default class AuthController {
       }
     }
 
+    if (!user) {
+      return response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
+    }
+    user.lastLoginAt = DateTime.now()
+    await user.save()
+
     const token = await auth.attempt(payload.email, payload.password, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
@@ -108,7 +114,9 @@ export default class AuthController {
     const sks = await SecurityKey.query().where('keyLstr', keyLstr)
     for (let sk of sks) {
       if (await Hash.verify(sk.key, payload.key)) {
-        const user = await User.find(sk.userId)
+        const user = await User.findOrFail(sk.userId)
+        user.lastLoginAt = DateTime.now()
+        await user.save()
         const token = await auth.use('jwt').generate(user!!, {
           expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
         })
@@ -148,6 +156,8 @@ export default class AuthController {
       const token = await auth.use('jwt').generate(user, {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })
+      user.lastLoginAt = DateTime.now()
+      await user.save()
       response.format(200, token)
       if (requestPayload.auth_session_uuid) {
         ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken)
@@ -177,6 +187,8 @@ export default class AuthController {
         const dbGoogleUser = await newGoogleUser.save()
         this.createDefaultVirtualNetwork(dbGoogleUser, request.ip(), tx)
         newGoogleUser.id = dbGoogleUser.id
+        newGoogleUser.lastLoginAt = DateTime.now()
+        await newGoogleUser.save()
         identity.userId = dbGoogleUser.id
         identity.useTransaction(tx)
         await identity.save()
