@@ -56,7 +56,7 @@ export default class VirtualNetworksController {
       }
       const location = geoip.lookup(data.server.host)
       server = await Server.create({
-        host: `${data.server.host}:${data.server.port || 7787}`,
+        host: `${data.server.host}:${data.server.port || 5565}`,
         name: 'Custom server',
         country: location ? location.country : null,
         type: ServerType.SelfHosted,
