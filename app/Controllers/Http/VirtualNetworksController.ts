@@ -180,7 +180,6 @@ export default class VirtualNetworksController {
       }
     } else {
       if (server.type === ServerType.SelfHosted) {
-        await server.delete()
         let chosenServer
         const location = geoip.lookup(request.ip())
         Logger.debug('request ip is %s', request.ip())
@@ -195,6 +194,7 @@ export default class VirtualNetworksController {
 
         if (chosenServer) {
           virtualNetwork.serverId = chosenServer.id
+          await server.delete()
         }
       }
     }
