@@ -479,14 +479,7 @@ export default class VirtualNetworksController {
   public async createInvitation({ params, request, response, auth }: HttpContextContract) {
     const data = await request.validate({
       schema: schema.create({
-        emails: schema.array().members(
-          schema.string(
-            {
-              trim: true,
-            },
-            [rules.email()]
-          )
-        ),
+        email: schema.string({ trim: true }, [rules.email({ sanitize: true })]),
       }),
       reporter: CustomReporter,
     })
@@ -505,18 +498,34 @@ export default class VirtualNetworksController {
       return response.format(403, 'You are not authorized to create invitation')
     }
 
-    const users = await User.query().whereIn('email', data.emails)
+    const user = await User.query().select('id').where('email', data.email).first()
+    if (!user) {
+      return response.format(404, 'User not available')
+    }
 
-    const invitations = await virtualNetwork.related('invitations').createMany(
-      users.map((user) => ({
+    const isUserInVirtualNetwork = await virtualNetwork.related('users').query().where('user_id', user.id).first()
+    if (isUserInVirtualNetwork) {
+      return response.format(400, 'User already in virtual network')
+    }
+
+    let invitation = await virtualNetwork.related('invitations').query().where('invited_user_id', user.id).first()
+
+    if (invitation) {
+      if (invitation.status === InvitationStatus.Pending) {
+        return response.format(400, 'Invitation already pending')
+      }
+      invitation.status = InvitationStatus.Pending
+      await invitation.save()
+    } else {
+      invitation = await virtualNetwork.related('invitations').create({
         invitedUserId: user.id,
         invitedByUserId: auth.user?.id,
         virtualNetworkId: virtualNetwork.id,
         status: InvitationStatus.Pending,
-      }))
-    )
+      })
+    }
 
-    return response.format(200, invitations)
+    return response.format(200, invitation)
   }
 
   public async listInvitations({ params, request, response, auth }: HttpContextContract) {

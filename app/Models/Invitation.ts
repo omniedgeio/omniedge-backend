@@ -40,7 +40,7 @@ export default class Invitation extends compose(BaseModel, Filterable) {
   })
   public invitedBy: BelongsTo<typeof User>
 
-  @belongsTo(() => VirtualNetwork)
+  @belongsTo(() => VirtualNetwork, { serializeAs: 'virtual_network' })
   public virtualNetwork: BelongsTo<typeof VirtualNetwork>
 
   @column.dateTime({ autoCreate: true })

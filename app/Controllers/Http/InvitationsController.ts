@@ -131,6 +131,7 @@ export default class InvitationsController {
     }
 
     invitation.status = data.status as InvitationStatus
+    await invitation.save()
 
     return response.format(200, 'Invitation updated successfully')
   }
