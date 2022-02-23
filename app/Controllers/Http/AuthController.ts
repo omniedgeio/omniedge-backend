@@ -53,9 +53,18 @@ export default class AuthController {
         }),
       ]),
       name: schema.string({ trim: true }),
-      password: schema.string({ trim: true }),
+      password: schema.string({ trim: true }, [
+        rules.regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/),
+      ]),
     })
-    const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
+    const payload = await request.validate({
+      schema: authSchema,
+      reporter: CustomReporter,
+      messages: {
+        'password.regex':
+          'Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, one number and one special character',
+      },
+    })
     const freePlan = await Plan.findBy('slug', 'free')
     const user = new User()
     user.email = payload.email
