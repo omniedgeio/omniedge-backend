@@ -228,6 +228,10 @@ export default class AuthController {
       }
     }
 
+    if (!user?.password) {
+      return response.formatError(401, ErrorCode.auth.E_EMAIL_PASSWORD_NOT_MATCH, 'Invalid credentials')
+    }
+
     if (!user) {
       return response.formatError(404, ErrorCode.auth.E_USER_NOT_FOUND, 'User not found')
     }
