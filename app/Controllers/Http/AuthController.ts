@@ -45,6 +45,8 @@ export default class AuthController {
         rules.email({
           sanitize: {
             lowerCase: true,
+            removeDots: false,
+            removeSubaddress: false,
           },
         }),
         rules.unique({
@@ -100,6 +102,8 @@ export default class AuthController {
         rules.email({
           sanitize: {
             lowerCase: true,
+            removeDots: false,
+            removeSubaddress: false,
           },
         }),
       ]),
@@ -192,6 +196,8 @@ export default class AuthController {
         rules.email({
           sanitize: {
             lowerCase: true,
+            removeDots: false,
+            removeSubaddress: false,
           },
         }),
       ]),
@@ -353,6 +359,8 @@ export default class AuthController {
         rules.email({
           sanitize: {
             lowerCase: true,
+            removeDots: false,
+            removeSubaddress: false,
           },
         }),
       ]),

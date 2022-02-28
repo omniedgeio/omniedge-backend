@@ -52,6 +52,8 @@ export default class AuthController {
         rules.email({
           sanitize: {
             lowerCase: true,
+            removeDots: false,
+            removeSubaddress: false,
           },
         }),
       ]),
