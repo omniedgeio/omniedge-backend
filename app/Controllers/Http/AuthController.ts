@@ -17,7 +17,7 @@ import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import AWS from 'aws-sdk'
 import axios from 'axios'
 import { AuthType, UserRole, UserStatus } from 'Contracts/enum'
-import { default as omniedge, default as omniedgeConfig } from 'Contracts/omniedge'
+import Omniedge, { default as omniedge, default as omniedgeConfig } from 'Contracts/omniedge'
 import geoip from 'geoip-lite'
 import { OAuth2Client, TokenPayload } from 'google-auth-library'
 import { DateTime } from 'luxon'
@@ -55,9 +55,7 @@ export default class AuthController {
         }),
       ]),
       name: schema.string({ trim: true }),
-      password: schema.string({ trim: true }, [
-        rules.regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/),
-      ]),
+      password: schema.string({ trim: true }, Omniedge.rules.passwordRules),
     })
     const payload = await request.validate({
       schema: authSchema,
@@ -348,7 +346,7 @@ export default class AuthController {
       response.formatError(
         403,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
-        'The email which your google account binds is used in the system'
+        'The email which your google account binds is used in the system',
       )
     }
   }
@@ -394,7 +392,7 @@ export default class AuthController {
   public async resetPasswordWithVerification({ request, response }: HttpContextContract) {
     const authSchema = schema.create({
       token: schema.string({ trim: true }),
-      password: schema.string({ trim: true }),
+      password: schema.string({ trim: true }, Omniedge.rules.passwordRules),
     })
     const requestPayload = await request.validate({ schema: authSchema, reporter: CustomReporter })
 
@@ -442,14 +440,14 @@ export default class AuthController {
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: email',
-        null
+        null,
       )
     } else if (!payload.sub) {
       throw new AuthException(
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: sub',
-        null
+        null,
       )
     } else {
       return payload
