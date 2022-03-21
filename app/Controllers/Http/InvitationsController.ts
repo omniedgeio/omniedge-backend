@@ -123,7 +123,7 @@ export default class InvitationsController {
         return response.format(403, "You have reached your virtual network's limit.")
       }
 
-      await UserVirtualNetwork.create({
+      await UserVirtualNetwork.firstOrCreate({
         userId: invitation.invitedUserId,
         virtualNetworkId: invitation.virtualNetworkId,
         role: UserRole.User,
