@@ -351,6 +351,23 @@ export default class AuthController {
     }
   }
 
+  public async refresh({ request, response, auth }: HttpContextContract) {
+    const requestSchema = schema.create({
+      refresh_token: schema.string({ trim: true }),
+    })
+    const payload = await request.validate({ schema: requestSchema, reporter: CustomReporter })
+    try {
+      const token = await auth.use('jwt').loginViaRefreshToken(payload.refresh_token, {
+        expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
+      })
+      response.format(200, token)
+    } catch (e) {
+      response.format(401, 'refresh token is incorrect')
+    }
+
+
+  }
+
   public async forgetPassword({ request, response }: HttpContextContract) {
     const requestSchema = schema.create({
       email: schema.string({ trim: true }, [

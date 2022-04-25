@@ -31,6 +31,7 @@ Route.group(() => {
       Route.post('/login/security-key', 'AuthController.loginWithSecurityKey')
       Route.post('/reset-password/code', 'AuthController.forgetPassword')
       Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
+      Route.post('/refresh','AuthController.refresh')
 
       // Features
       Route.post('/verify-email', 'AuthController.verifyEmail')
@@ -46,6 +47,7 @@ Route.group(() => {
       Route.group(() => {
         Route.post('/', 'VirtualNetworksController.create')
         Route.get('/', 'VirtualNetworksController.list')
+        Route.get('/all/list', 'v1/VirtualNetworksController.list')
         Route.get('/:id', 'VirtualNetworksController.retrieve')
         Route.put('/:id', 'VirtualNetworksController.update')
         Route.delete('/:id', 'VirtualNetworksController.delete')
