@@ -123,6 +123,8 @@ Route.group(() => {
       Route.post('/login/security-key', 'v1/AuthController.loginWithSecurityKey')
       Route.post('/reset-password/code', 'AuthController.forgetPassword')
       Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
+      Route.post('/refresh','AuthController.refresh')
+
 
       Route.get('/login/session', 'v1/AuthController.generateSession')
     }).prefix('/auth')
