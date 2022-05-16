@@ -181,3 +181,7 @@ Route.group(() => {
 })
   .prefix('/api/v2/admin')
   .middleware('admin-auth')
+
+Route.group(() => {
+  Route.post('/token', 'Oauth2sController.accessToken')
+}).prefix('/oauth')

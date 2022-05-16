@@ -1,5 +1,17 @@
 {
   "commands": {
+    "create:oauth2_client": {
+      "settings": {
+        "loadApp": false,
+        "stayAlive": false
+      },
+      "commandPath": "./commands/CreateOauth2Client",
+      "commandName": "create:oauth2_client",
+      "description": "",
+      "args": [],
+      "aliases": [],
+      "flags": []
+    },
     "migrate:data": {
       "settings": {
         "loadApp": true,
