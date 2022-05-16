@@ -2,7 +2,7 @@
   "commands": {
     "create:oauth2_client": {
       "settings": {
-        "loadApp": false,
+        "loadApp": true,
         "stayAlive": false
       },
       "commandPath": "./commands/CreateOauth2Client",
