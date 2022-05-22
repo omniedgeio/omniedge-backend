@@ -21,6 +21,12 @@ export default class Oauth2Token extends BaseModel {
   @column({ columnName: 'client_id'})
   public clientId: string
 
+  @column({ columnName: 'user_id'})
+  public userId: string
+
+  @column({ columnName: 'grant_type'})
+  public grantType: string
+
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
 

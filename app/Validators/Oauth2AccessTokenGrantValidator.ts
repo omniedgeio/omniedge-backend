@@ -1,7 +1,7 @@
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
-export default class Oauth2ClientCredentialValidator {
+export default class Oauth2AccessTokenGrantValidator {
   constructor(protected ctx: HttpContextContract) {}
 
   /*
@@ -41,7 +41,10 @@ export default class Oauth2ClientCredentialValidator {
     ]),
     refresh_token: schema.string({
       trim: true
-    })
+    }),
+    code: schema.string({ // authorization code
+      trim: true
+    }),
   })
 
   /**
