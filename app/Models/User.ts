@@ -11,11 +11,13 @@ import {
   column,
   HasMany,
   hasMany,
+  HasOne,
+  hasOne,
   ManyToMany,
   manyToMany,
 } from '@ioc:Adonis/Lucid/Orm'
 import { DateTime } from 'luxon'
-import { UsageKey, UserRole, UserStatus } from './../../contracts/enum'
+import { UsageKey, UserRole, UserStatus, RegisterType } from './../../contracts/enum'
 import { modelId } from './../../utils/nanoid'
 import Device from './Device'
 import UserFilter from './Filters/UserFilter'
@@ -28,6 +30,7 @@ import SecurityKey from './SecurityKey'
 import UserLimit from './UserLimit'
 import UserVirtualNetwork from './UserVirtualNetwork'
 import VirtualNetwork from './VirtualNetwork'
+import Referral from './Referral'
 
 export default class User extends compose(BaseModel, Filterable) {
   public static $filter = () => UserFilter
@@ -59,6 +62,9 @@ export default class User extends compose(BaseModel, Filterable) {
   @column()
   public status: UserStatus
 
+  @column()
+  public registerType: RegisterType
+
   @column({ serializeAs: null })
   public planId: string | null
 
@@ -76,6 +82,9 @@ export default class User extends compose(BaseModel, Filterable) {
 
   @hasMany(() => Identity)
   public identities: HasMany<typeof Identity>
+
+  @hasOne(() => Referral)
+  public referral: HasOne<typeof Referral>
 
   @manyToMany(() => VirtualNetwork, {
     pivotTable: 'user_virtual_network',

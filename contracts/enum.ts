@@ -8,6 +8,10 @@ export enum AuthType {
   Google = 'google',
 }
 
+export enum RegisterType {
+  Referral = 'referral',
+}
+
 export enum UserRole {
   User = 1,
   Admin = 2,
