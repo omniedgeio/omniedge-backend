@@ -65,6 +65,13 @@ export default class AuthController {
           'Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, one number and one special character',
       },
     })
+
+    const existsUser = await User.findBy('email', payload.email)
+    if (existsUser) {
+      response.formatError(400, ErrorCode.auth.E_USER_EXISTS, 'User already exists')
+      return
+    }
+
     const freePlan = await Plan.findBy('slug', 'free')
     const user = new User()
     user.email = payload.email
@@ -204,7 +211,8 @@ export default class AuthController {
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
 
     // Cognito
-    const user = await User.findBy('email', payload.email)
+    const user = await User.query().where('email', payload.email).where('status', UserStatus.Active).first()
+
     if (user?.cognitoId && !user.password) {
       const cognitoISP = new AWS.CognitoIdentityServiceProvider()
       try {
