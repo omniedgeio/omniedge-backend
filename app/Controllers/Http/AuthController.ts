@@ -129,7 +129,6 @@ export default class AuthController {
     }
     const emailToken = await this.generateActivateToken(user.email!!)
     try {
-      console.log(this.activateEndpoint(emailToken))
       await Mail.use().send((message) => {
         message
           .from(omniedgeConfig.mail.senderAddress, omniedgeConfig.mail.senderName)

@@ -103,7 +103,6 @@ export default class AuthController {
     const token = await auth.attempt(payload.email, payload.password, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
-    console.log(payload.auth_session_uuid)
     if (payload.auth_session_uuid) {
       ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken, token.refreshToken)
     }
