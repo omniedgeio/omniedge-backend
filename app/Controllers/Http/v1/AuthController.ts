@@ -42,7 +42,7 @@ export default class AuthController {
     const token = await auth.use('jwt').generate(user!!, {
       expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
     })
-    ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
+    ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken, token.refreshToken)
     response.format(200, token)
   }
 
@@ -105,7 +105,7 @@ export default class AuthController {
     })
     console.log(payload.auth_session_uuid)
     if (payload.auth_session_uuid) {
-      ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
+      ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken, token.refreshToken)
     }
     response.format(200, token)
   }
@@ -128,7 +128,7 @@ export default class AuthController {
         })
         response.format(200, token)
         if (payload.auth_session_uuid) {
-          ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken)
+          ws.notifyTokenResponse(payload.auth_session_uuid, token.accessToken,token.refreshToken)
         }
         return
       }
@@ -166,7 +166,7 @@ export default class AuthController {
       await user.save()
       response.format(200, token)
       if (requestPayload.auth_session_uuid) {
-        ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken)
+        ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken, token.refreshToken)
       }
       return
     }
@@ -204,13 +204,13 @@ export default class AuthController {
       })
       response.format(200, token)
       if (requestPayload.auth_session_uuid) {
-        ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken)
+        ws.notifyTokenResponse(requestPayload.auth_session_uuid, token.accessToken, token.refreshToken)
       }
     } else {
       response.formatError(
         403,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
-        'The email which your google account binds is used in the system'
+        'The email which your google account binds is used in the system',
       )
     }
   }
@@ -230,14 +230,14 @@ export default class AuthController {
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: email',
-        null
+        null,
       )
     } else if (!payload.sub) {
       throw new AuthException(
         401,
         ErrorCode.auth.E_GOOGLE_AUTH_FAIL,
         'Google payload does not have attribute: sub',
-        null
+        null,
       )
     } else {
       return payload

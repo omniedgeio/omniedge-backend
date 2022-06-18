@@ -20,6 +20,10 @@ export default class WebsocketService implements IWebSocketService {
       } else {
         ws.close()
       }
+
+      ws.onmessage = event => {
+        ws.send(event.data)
+      }
     })
   }
 
