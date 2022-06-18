@@ -31,7 +31,8 @@ jobs:
 
             -   name: get cluster config variables
                 run: |
-                    echo "REGISTRY=171635321995.dkr.ecr.us-east-2.amazonaws.com/omniedge-adonis-backend" >> $GITHUB_ENV
+                    echo "REGISTRY=171635321995.dkr.ecr.us-east-2.amazonaws.com" >> $GITHUB_ENV
+                    echo "REPO_NAME=omniedge-adonis-backend" >> $GITHUB_ENV
                     echo "CLUSTER=webapp-Cluster" >> $GITHUB_ENV
                     echo "CONTAINER=omniedge-adonis-${{ env.ENVIRONMENT }}-Container" >> $GITHUB_ENV
                     echo "SVC=omniedge-adonis-${{ env.ENVIRONMENT }}-Service" >> $GITHUB_ENV
@@ -44,8 +45,8 @@ jobs:
             -   name: Configure AWS credentials
                 uses: aws-actions/configure-aws-credentials@v1
                 with:
-                    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-                    aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET }}
+                    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                     aws-region: us-east-2
 
 
