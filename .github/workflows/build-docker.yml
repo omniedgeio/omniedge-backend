@@ -1,17 +1,14 @@
-name: omniedge compile
+name: omniedge docker build
 
 on:
-  push:
-    branches:
-    #  - dev
-    #  - main
+  workflow_dispatch:
 
 jobs:
   build:
     name: Build on ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ ubuntu-20.04 ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
