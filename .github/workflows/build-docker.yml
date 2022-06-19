@@ -2,6 +2,10 @@ name: omniedge docker build
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: build with tag (optional)
+        required: false
 
 jobs:
   build:
@@ -21,8 +25,28 @@ jobs:
         run: |
           echo -e "system info: $(uname -a)"
 
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H:%M:%S')"
+
+      - uses: actions/checkout@v2
+        name: checkout HEAD
+        if: ${{ ! github.event.inputs.tag }}
+
+      - uses: actions/checkout@v2
+        name: checkout with tag
+        if: ${{ github.event.inputs.tag }}
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag }}
+
+      - run: |
+          git_hash=$(git rev-parse --short HEAD)
+          echo "GIT_SHORT_SHA=$git_hash" >> $GITHUB_ENV
+
+      - name: git tag
+        if: ${{ github.event.inputs.tag }}
+        run: |
+          echo "GIT_TAG=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -62,6 +86,10 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           file: docker/Dockerfile
+          build-args: |
+            GIT_SHA=${{ env.GIT_SHORT_SHA }}
+            GIT_TAG=${{ env.GIT_TAG }}
+            BUILD_TIME=${{ steps.date.outputs.date }}
           push: true
           context: .
           tags: ${{ steps.meta.outputs.tags }}

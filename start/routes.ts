@@ -185,3 +185,7 @@ Route.group(() => {
 Route.group(() => {
   Route.post('/token', 'Oauth2sController.accessToken')
 }).prefix('/oauth')
+
+Route.group(()=>{
+  Route.get('/health','HealthController.health')
+})

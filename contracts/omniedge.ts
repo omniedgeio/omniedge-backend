@@ -1,7 +1,9 @@
 import Env from '@ioc:Adonis/Core/Env'
 import { rules } from '@ioc:Adonis/Core/Validator'
+import { DateTime } from 'luxon'
 
 const omniedgeConfig = {
+  startTime:DateTime.now(),
   clientUrl: Env.get('CLIENT_URL') as string,
   key: {
     signAlg: 'HS512',
