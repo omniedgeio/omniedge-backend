@@ -11,6 +11,16 @@ jobs:
         os: [ ubuntu-20.04 ]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Show CPU Model and Free Space
+        run: |
+          echo -e "Total CPU cores\t: $(nproc)"
+          cat /proc/cpuinfo | grep 'model name'
+          free -h
+
+      - name: Show system info
+        run: |
+          echo -e "system info: $(uname -a)"
+
       - name: Checkout
         uses: actions/checkout@v2
 
@@ -38,15 +48,14 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha
 
-      - name: Show CPU Model and Free Space
+      - name: notice
         run: |
-          echo -e "Total CPU cores\t: $(nproc)"
-          cat /proc/cpuinfo | grep 'model name'
-          free -h
-
-      - name: Show system info
-        run: |
-          echo -e "system info: $(uname -a)"
+          DOCKER_TAGS="${{steps.meta.outputs.tags}}"
+          DOCKER_TAGS="${DOCKER_TAGS//'%'/'%25'}"
+          DOCKER_TAGS="${DOCKER_TAGS//$'\n'/'%0A'}"
+          DOCKER_TAGS="${DOCKER_TAGS//$'\r'/'%0D'}"
+          echo "::set-output name=content::$DOCKER_TAGS"
+          echo "::notice ::docker-tag:$DOCKER_TAGS"
 
       - name: Build and push
         id: docker_build
