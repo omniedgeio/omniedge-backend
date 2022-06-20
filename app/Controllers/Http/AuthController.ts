@@ -210,7 +210,7 @@ export default class AuthController {
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
 
     // Cognito
-    const user = await User.query().where('email', payload.email).where('status', UserStatus.Active).first()
+    const user = await User.query().where('email', payload.email).first()
 
     if (user?.cognitoId && !user.password) {
       const cognitoISP = new AWS.CognitoIdentityServiceProvider()
