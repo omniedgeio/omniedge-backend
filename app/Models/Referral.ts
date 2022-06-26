@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon'
+import referralCodeGenerator from 'referral-code-generator'
 import { BaseModel, column, belongsTo, BelongsTo, beforeCreate } from '@ioc:Adonis/Lucid/Orm'
 import User from "./User";
 
@@ -15,14 +16,14 @@ export default class Referral extends BaseModel {
   @column({ columnName: 'referral_code' })
   public referralCode: string
 
+  @column()
+  public userId: string
+
   @belongsTo(() => User)
   public user: BelongsTo<typeof User>;
 
-  @column({})
-  public code: string;
-
   @beforeCreate()
   public static async generate(model: Referral) {
-    model.code = 
+    model.referralCode = referralCodeGenerator.custom('lowercase', 6, 6, 'omniedge');
   }
 }

@@ -98,6 +98,11 @@ Route.group(() => {
       }).prefix('servers')
 
       Route.group(() => {
+        Route.post('/', 'ReferralsController.createReferralsCode')
+        Route.delete('/:code', 'ReferralsController.deleteReferralsCode')
+      }).prefix('/referrals')
+
+      Route.group(() => {
         Route.post('/portal-session', 'PaymentsController.createPortalSession')
         Route.post('/checkout-session', 'PaymentsController.createCheckoutSession')
       }).prefix('/payment')

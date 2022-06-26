@@ -31,6 +31,7 @@ import UserLimit from './UserLimit'
 import UserVirtualNetwork from './UserVirtualNetwork'
 import VirtualNetwork from './VirtualNetwork'
 import Referral from './Referral'
+import BonusLimit from './BonusLimit'
 
 export default class User extends compose(BaseModel, Filterable) {
   public static $filter = () => UserFilter
@@ -165,16 +166,42 @@ export default class User extends compose(BaseModel, Filterable) {
   }
 
   public async getLimit(key: UsageKey): Promise<number> {
-    if (!this.planId) return 0
-    const userLimit = await UserLimit.query().where('user_id', this.id).where('key', key).first()
-    if (!userLimit) {
-      const planLimit = await PlanLimit.query().where('plan_id', this.planId).where('key', key).first()
-      if (!planLimit) {
-        return 0
+    const bonusLimit = await BonusLimit.query().where('user_id', this.id).first()
+    const bonusDeviceLimit = bonusLimit?.deviceLimit ?? 0
+    const bonusNetworkLimit = bonusLimit?.networkLimit ?? 0
+
+    if (!this.planId) {
+      if (key === UsageKey.VirtualNetworks) {
+        return bonusNetworkLimit + 0
+      } else if (key === UsageKey.Devices) {
+        return bonusDeviceLimit + 0
       }
-      return planLimit.defaultLimit
+    } else {
+      const userLimit = await UserLimit.query().where('user_id', this.id).where('key', key).first()
+      if (!userLimit) {
+        const planLimit = await PlanLimit.query().where('plan_id', this.planId).where('key', key).first()
+        if (!planLimit) {
+          if (key === UsageKey.VirtualNetworks) {
+            return bonusNetworkLimit + 0
+          } else if (key === UsageKey.Devices) {
+            return bonusDeviceLimit + 0
+          }
+        } else {
+          if (key === UsageKey.VirtualNetworks) {
+            return bonusNetworkLimit + planLimit.defaultLimit
+          } else if (key === UsageKey.Devices) {
+            return bonusDeviceLimit + planLimit.defaultLimit
+          }
+        }
+      } else {
+        if (key === UsageKey.VirtualNetworks) {
+          return bonusNetworkLimit + userLimit?.limit
+        } else if (key === UsageKey.Devices) {
+          return bonusDeviceLimit + userLimit?.limit
+        }
+      }
     }
-    return userLimit?.limit
+    return 0
   }
 
   public async getUsage(key: UsageKey): Promise<number> {

@@ -9,6 +9,8 @@ import Database, { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import AuthException from 'App/Exceptions/AuthException'
 import Identity from 'App/Models/Identity'
 import Plan from 'App/Models/Plan'
+import Referral from 'App/Models/Referral'
+import ReferralRegisterUser from 'App/Models/ReferralRegisterUser'
 import SecurityKey from 'App/Models/SecurityKey'
 import Server from 'App/Models/Server'
 import User from 'App/Models/User'
@@ -98,6 +100,8 @@ export default class AuthController {
           uri: this.activateEndpoint(emailToken),
         })
     })
+    const referralCode = request.cookie('referralCode', '')
+    await this.afterUserRegistered(user, referralCode)
     this.sendContactToMautic(user)
   }
 
@@ -348,6 +352,9 @@ export default class AuthController {
       const token = await auth.use('jwt').generate(newGoogleUser, {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })
+
+      const referralCode = request.cookie('referralCode', '')
+      await this.afterUserRegistered(newGoogleUser, referralCode)
       response.format(200, token)
     } else {
       response.formatError(
@@ -540,5 +547,17 @@ export default class AuthController {
         tag: 'omniedge-backend',
       },
     })
+  }
+
+  private async afterUserRegistered(user: User, referralCode: string): Promise<void> {
+    if (referralCode) {
+      const referral = await Referral.findBy('referral_code', referralCode)
+      if (referral) {
+        await ReferralRegisterUser.create({
+          registerUserId: user.id,
+          referralCodeUserId: referral.userId,
+        })
+      }
+    }
   }
 }
