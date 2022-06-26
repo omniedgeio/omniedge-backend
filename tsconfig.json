@@ -34,7 +34,8 @@
       "adonis-lucid-filter",
       "@adonisjs/mail",
       "@adonisjs/view",
-      "@bitkidd/adonis-stripe"
+      "@bitkidd/adonis-stripe",
+      "adonis5-scheduler"
     ]
   }
 }
