@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "REGISTRY=171635321995.dkr.ecr.us-east-2.amazonaws.com" >> $GITHUB_ENV
           echo "REPO_NAME=omniedge-adonis-backend" >> $GITHUB_ENV
-          echo "CLUSTER=webapp-Cluster" >> $GITHUB_ENV
+          echo "CLUSTER=webapi-cluster-Cluster" >> $GITHUB_ENV
           echo "CONTAINER=omniedge-adonis-${{ env.ENVIRONMENT }}-Container" >> $GITHUB_ENV
           echo "SVC=omniedge-adonis-${{ env.ENVIRONMENT }}-Service" >> $GITHUB_ENV
           echo "TASK=omniedge-adonis-${{ env.ENVIRONMENT }}-Task" >> $GITHUB_ENV
