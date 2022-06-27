@@ -33,13 +33,13 @@ export default class WebsocketService implements IWebSocketService {
     }
   }
 
-  public notifyTokenResponse(sessionId: string, token: string): void {
+  public notifyTokenResponse(sessionId: string, token: string, refreshToken: string): void {
     if (
       this.authSessions[sessionId] &&
       this.authSessions[sessionId].Conn &&
       this.authSessions[sessionId].ExpiredAt > DateTime.now()
     ) {
-      this.authSessions[sessionId].Conn?.send(JSON.stringify({ token }))
+      this.authSessions[sessionId].Conn?.send(JSON.stringify({ token: token, refresh_token: refreshToken }))
       this.authSessions[sessionId].Conn?.close()
     }
   }
