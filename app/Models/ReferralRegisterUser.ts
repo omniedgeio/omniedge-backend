@@ -12,7 +12,7 @@ export default class ReferralRegisterUser extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
 
-  @column()
+  @column({ columnName: 'register_user_id '})
   public registerUserId: string
 
   @column({columnName: 'referral_code_user_id'})

@@ -16,7 +16,7 @@ export default class Referral extends BaseModel {
   @column({ columnName: 'referral_code' })
   public referralCode: string
 
-  @column()
+  @column({ columnName: 'user_id' })
   public userId: string
 
   @belongsTo(() => User)
