@@ -11,7 +11,7 @@ export default class extends BaseSchema {
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL
        */
       table.string('referral_code').notNullable()
-      table.foreign('user_id').references('id').inTable('users').onDelete('cascade')
+      table.string('user_id').references('id').inTable('users').onDelete('cascade')
       table.timestamp('created_at', { useTz: true })
       table.timestamp('updated_at', { useTz: true })
       table.index('referral_code')
