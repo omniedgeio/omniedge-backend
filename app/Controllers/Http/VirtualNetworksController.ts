@@ -15,9 +15,11 @@ import { DateTime } from 'luxon'
 import { Netmask } from 'netmask'
 import { nextUnassignedIP } from '../../../utils/ip'
 import { InvitationStatus, ServerType, UsageKey, UserRole } from './../../../contracts/enum'
+import { ip2Country } from 'App/Util/geo'
 
 export default class VirtualNetworksController {
   hostnameWithPortRegex = '([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}:[0-9]{1,5})|([a-z]+.[a-z]+.[a-z]+:[0-9]{1,5})'
+
   public async create({ request, response, auth }: HttpContextContract) {
     const v4str =
       '(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}\\/(3[0-2]|[12]?[0-9])'
@@ -62,16 +64,10 @@ export default class VirtualNetworksController {
         type: ServerType.SelfHosted,
       })
     } else {
-      const location = geoip.lookup(request.ip())
       Logger.debug('request ip is %s', request.ip())
       let query = Server.query().where('type', ServerType.Default)
-      if (location && location.timezone.includes('Asia')) {
-        server = await query.where('country', 'HK').first()
-      } else if (location && location.timezone.includes('Europe')) {
-        server = await query.where('country', 'DE').first()
-      } else {
-        server = await query.where('country', 'US').first()
-      }
+      const countryCode = ip2Country(request.ip())
+      server = await query.where('country', countryCode).first()
     }
 
     if (server) {
@@ -94,6 +90,7 @@ export default class VirtualNetworksController {
     return response.format(200, virtualNetwork)
   }
 
+
   public async list({ request, response, auth }: HttpContextContract) {
     const virtualNetworks = await auth.user
       ?.related('virtualNetworks')
@@ -108,7 +105,7 @@ export default class VirtualNetworksController {
       .preload('server')
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, virtualNetworks?.serialize())
@@ -259,7 +256,7 @@ export default class VirtualNetworksController {
       .select('id', 'name', 'email', 'picture', 'status')
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, users?.serialize())
@@ -338,7 +335,7 @@ export default class VirtualNetworksController {
       await VirtualNetworkDevice.query({ client: trx })
         .whereIn(
           'device_id',
-          Database.from('devices').useTransaction(trx).select('id').where('user_id', params.user_id)
+          Database.from('devices').useTransaction(trx).select('id').where('user_id', params.user_id),
         )
         .delete()
 
@@ -377,7 +374,7 @@ export default class VirtualNetworksController {
       .filter(request.qs())
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, devices?.serialize())
@@ -447,7 +444,7 @@ export default class VirtualNetworksController {
       {
         virtualIp: nextIP,
         lastSeen: DateTime.now(),
-      }
+      },
     )
 
     await virtualNetwork.load('server')
@@ -550,7 +547,7 @@ export default class VirtualNetworksController {
       .preload('invitedBy', (query) => query.select('id', 'name', 'email'))
       .paginate(
         Math.round(Math.max(request.input('page') || 1, 1)),
-        Math.round(Math.max(request.input('per_page') || 10, 10))
+        Math.round(Math.max(request.input('per_page') || 10, 10)),
       )
 
     return response.format(200, invitations?.serialize())
@@ -580,4 +577,6 @@ export default class VirtualNetworksController {
 
     return response.format(200, 'Deleted invitation successfully')
   }
+
+
 }

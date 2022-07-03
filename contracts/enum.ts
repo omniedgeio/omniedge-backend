@@ -39,6 +39,8 @@ export enum ServerType {
 }
 
 export enum Country {
+  UnitedStatesEast = 'UE',
+  UnitedStatesWest = 'UW',
   UnitedStates = 'US',
   Afghanistan = 'AF',
   AlandIslands = 'AX',
