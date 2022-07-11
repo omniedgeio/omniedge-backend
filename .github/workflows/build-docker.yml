@@ -1,10 +1,21 @@
 name: omniedge docker build
 
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
     inputs:
+      environment:
+        description: environment [dev,prod]
+        default: dev
+        required: true
       tag:
         description: build with tag (optional)
+        required: false
+      invokeDeploy:
+        description: invoke deploy (optional)
+        type: boolean
         required: false
 
 jobs:
@@ -13,6 +24,9 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-20.04 ]
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+      INVOKE_DEPLOY: ${{ github.event.inputs.invokeDeploy || 'false' }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Show CPU Model and Free Space
@@ -93,3 +107,15 @@ jobs:
           push: true
           context: .
           tags: ${{ steps.meta.outputs.tags }}
+
+      - name: default tag is latest
+        run: |
+          echo "REPO_TAG=latest" >> $GITHUB_ENV
+
+      - name: Invoke deploy workflow
+        if: ${{ env.ENVIRONMENT == 'dev' || env.INVOKE_DEPLOY == 'true' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: omniedge ecs deploy
+          token: ${{ secrets.USER_GITHUB_TOKEN }}
+          inputs: '{"envName":"${{env.ENVIRONMENT}}","repoTag":"${{env.REPO_TAG}}"}'
