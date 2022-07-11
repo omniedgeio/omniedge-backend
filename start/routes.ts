@@ -111,6 +111,8 @@ Route.group(() => {
       Route.post('/auth/login/session/notify', 'v1/AuthController.notifySession')
     }).middleware('auth')
 
+    Route.get('/referrals', 'ReferralsController.setReferralCookie')
+
     Route.group(() => {
       Route.post('/webhook', 'PaymentsController.stripeWebhook')
     }).prefix('/payment')

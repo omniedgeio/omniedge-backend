@@ -18,6 +18,18 @@ export default class ReferralsController {
     })
   }
 
+  public async setReferralCookie({request, response} :HttpContextContract) {
+    const referralCode = request.qs().referral_code;
+    const referral = await Referral.findBy('referral_code', referralCode)
+    if (!referral) {
+      response.status(204);
+      return
+    }
+    response.cookie('referral_code', referralCode)
+    response.status(204);
+    return
+  }
+
   public async deleteReferralsCode({request, response} :HttpContextContract) {
     const code = request.param('code');
     if (code) {
