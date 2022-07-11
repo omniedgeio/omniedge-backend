@@ -1,5 +1,8 @@
 name: omniedge ecs deploy
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
     inputs:
       envName:
