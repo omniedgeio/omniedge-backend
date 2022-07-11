@@ -1,5 +1,6 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { rules, schema } from '@ioc:Adonis/Core/Validator'
+import Referral from 'App/Models/Referral'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import { UsageKey } from 'Contracts/enum'
 import Omniedge from 'Contracts/omniedge'
@@ -25,6 +26,8 @@ export default class ProfilesController {
       },
     }
 
+    const referral = await Referral.findBy('user_id', user.id)
+
     response.format(200, {
       id: user.id,
       name: user.name,
@@ -39,7 +42,7 @@ export default class ProfilesController {
         cancel_at: subscription?.cancel_at && DateTime.fromSeconds(subscription?.cancel_at),
       },
       usage_limits: usageLimits,
-      referral_code: user.referral.referralCode,
+      referral_code: referral ? referral.referralCode : '',
     })
   }
 
