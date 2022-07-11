@@ -39,6 +39,7 @@ export default class ProfilesController {
         cancel_at: subscription?.cancel_at && DateTime.fromSeconds(subscription?.cancel_at),
       },
       usage_limits: usageLimits,
+      referral_code: user.referral.referralCode,
     })
   }
 
