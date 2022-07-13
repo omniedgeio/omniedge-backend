@@ -25,7 +25,7 @@ export default class ReferralsController {
       response.status(204);
       return
     }
-    response.cookie('referral_code', referralCode, {sameSite: 'none'})
+    response.cookie('referral_code', referralCode, {sameSite: 'none', secure: true})
     response.status(204);
     return
   }
