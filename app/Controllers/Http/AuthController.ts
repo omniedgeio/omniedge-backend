@@ -89,6 +89,9 @@ export default class AuthController {
     } else {
       response.formatError(502, ErrorCode.auth.E_SAVE_USER, 'Fail to save user')
     }
+    const referralCode = request.cookie('referral_code', '')
+    Logger.info(`referralCode: ${referralCode}`)
+    await this.afterUserRegistered(user, referralCode);
     const emailToken = await this.generateActivateToken(user.email)
     await Mail.use().sendLater((message) => {
       message
@@ -99,9 +102,9 @@ export default class AuthController {
           name: user.name,
           uri: this.activateEndpoint(emailToken),
         })
+    }).catch((e: Error) => {
+      Logger.error(e.message);
     })
-    const referralCode = request.cookie('referralCode', '')
-    await this.afterUserRegistered(user, referralCode)
     this.sendContactToMautic(user)
   }
 
