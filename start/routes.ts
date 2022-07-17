@@ -100,6 +100,7 @@ Route.group(() => {
       Route.group(() => {
         Route.post('/', 'ReferralsController.createReferralsCode')
         Route.delete('/:code', 'ReferralsController.deleteReferralsCode')
+        Route.get('/info', 'ReferralsController.getReferralsInfo')
       }).prefix('/referrals')
 
       Route.group(() => {
