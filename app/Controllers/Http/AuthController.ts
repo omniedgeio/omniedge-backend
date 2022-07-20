@@ -18,13 +18,13 @@ import VirtualNetwork from 'App/Models/VirtualNetwork'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import AWS from 'aws-sdk'
 import axios from 'axios'
-import { AuthType, UserRole, UserStatus } from 'Contracts/enum'
+import { AuthType, ServerType, UserRole, UserStatus } from 'Contracts/enum'
 import Omniedge, { default as omniedge, default as omniedgeConfig } from 'Contracts/omniedge'
-import geoip from 'geoip-lite'
 import { OAuth2Client, TokenPayload } from 'google-auth-library'
 import { DateTime } from 'luxon'
 import { ErrorCode } from '../../../utils/constant'
 import { generateToken, verifyToken } from '../../../utils/jwt'
+import { ip2Country } from 'App/Util/geo'
 
 // todo all login check user status!=blocked
 export default class AuthController {
@@ -511,18 +511,12 @@ export default class AuthController {
       name: 'My Omni Network',
       ipRange: '100.100.0.0/24',
     })
-
-    const location = geoip.lookup(ip)
     Logger.debug('request ip is %s', ip)
     let server: Server | null
-    if (location && location.timezone.includes('Asia')) {
-      server = await Server.findBy('country', 'HK')
-    } else if (location && location.timezone.includes('Europe')) {
-      server = await Server.findBy('country', 'DE')
-    } else {
-      server = await Server.findBy('country', 'US')
-    }
-
+    let query = Server.query().where('type', ServerType.Default)
+    ip2Country(ip)
+    const countryCode = ip2Country(ip)
+    server = await query.where('country', countryCode).first()
     if (server) {
       virtualNetwork.serverId = server.id
     }
