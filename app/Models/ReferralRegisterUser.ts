@@ -29,13 +29,17 @@ export default class ReferralRegisterUser extends BaseModel {
       })
     } else {
       const count = await ReferralRegisterUser.query().where('referral_code_user_id', model.referralCodeUserId);
-      if (count.length == 10) {
+      if (count.length === 10) {
         bonusLimit.deviceLimit = 10;
         bonusLimit.networkLimit = 1;
         await bonusLimit.save()
-      } else if (count.length == 20) {
+      } else if (count.length === 20) {
         bonusLimit.deviceLimit = 20;
         bonusLimit.networkLimit = 2;
+        await bonusLimit.save()
+      } else if (count.length === 100) {
+        bonusLimit.deviceLimit = 100;
+        bonusLimit.networkLimit = 10;
         await bonusLimit.save()
       }
     }
