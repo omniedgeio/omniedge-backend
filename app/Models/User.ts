@@ -11,11 +11,13 @@ import {
   column,
   HasMany,
   hasMany,
+  HasOne,
+  hasOne,
   ManyToMany,
   manyToMany,
 } from '@ioc:Adonis/Lucid/Orm'
 import { DateTime } from 'luxon'
-import { UsageKey, UserRole, UserStatus } from './../../contracts/enum'
+import { UsageKey, UserRole, UserStatus, RegisterType } from './../../contracts/enum'
 import { modelId } from './../../utils/nanoid'
 import Device from './Device'
 import UserFilter from './Filters/UserFilter'
@@ -28,6 +30,8 @@ import SecurityKey from './SecurityKey'
 import UserLimit from './UserLimit'
 import UserVirtualNetwork from './UserVirtualNetwork'
 import VirtualNetwork from './VirtualNetwork'
+import Referral from './Referral'
+import BonusLimit from './BonusLimit'
 
 export default class User extends compose(BaseModel, Filterable) {
   public static $filter = () => UserFilter
@@ -59,6 +63,9 @@ export default class User extends compose(BaseModel, Filterable) {
   @column()
   public status: UserStatus
 
+  @column()
+  public registerType: RegisterType
+
   @column({ serializeAs: null })
   public planId: string | null
 
@@ -76,6 +83,9 @@ export default class User extends compose(BaseModel, Filterable) {
 
   @hasMany(() => Identity)
   public identities: HasMany<typeof Identity>
+
+  @hasOne(() => Referral)
+  public referral: HasOne<typeof Referral>
 
   @manyToMany(() => VirtualNetwork, {
     pivotTable: 'user_virtual_network',
@@ -156,16 +166,42 @@ export default class User extends compose(BaseModel, Filterable) {
   }
 
   public async getLimit(key: UsageKey): Promise<number> {
-    if (!this.planId) return 0
-    const userLimit = await UserLimit.query().where('user_id', this.id).where('key', key).first()
-    if (!userLimit) {
-      const planLimit = await PlanLimit.query().where('plan_id', this.planId).where('key', key).first()
-      if (!planLimit) {
-        return 0
+    const bonusLimit = await BonusLimit.query().where('user_id', this.id).first()
+    const bonusDeviceLimit = bonusLimit?.deviceLimit ?? 0
+    const bonusNetworkLimit = bonusLimit?.networkLimit ?? 0
+
+    if (!this.planId) {
+      if (key === UsageKey.VirtualNetworks) {
+        return bonusNetworkLimit + 0
+      } else if (key === UsageKey.Devices) {
+        return bonusDeviceLimit + 0
       }
-      return planLimit.defaultLimit
+    } else {
+      const userLimit = await UserLimit.query().where('user_id', this.id).where('key', key).first()
+      if (!userLimit) {
+        const planLimit = await PlanLimit.query().where('plan_id', this.planId).where('key', key).first()
+        if (!planLimit) {
+          if (key === UsageKey.VirtualNetworks) {
+            return bonusNetworkLimit + 0
+          } else if (key === UsageKey.Devices) {
+            return bonusDeviceLimit + 0
+          }
+        } else {
+          if (key === UsageKey.VirtualNetworks) {
+            return bonusNetworkLimit + planLimit.defaultLimit
+          } else if (key === UsageKey.Devices) {
+            return bonusDeviceLimit + planLimit.defaultLimit
+          }
+        }
+      } else {
+        if (key === UsageKey.VirtualNetworks) {
+          return bonusNetworkLimit + userLimit?.limit
+        } else if (key === UsageKey.Devices) {
+          return bonusDeviceLimit + userLimit?.limit
+        }
+      }
     }
-    return userLimit?.limit
+    return 0
   }
 
   public async getUsage(key: UsageKey): Promise<number> {

@@ -54,6 +54,8 @@ export default class AppProvider {
         secretAccessKey: Env.get('AWS_SECRET_ACCESS_KEY'),
       }),
     })
+    const scheduler = this.app.container.use('Adonis/Addons/Scheduler')
+    scheduler.run()
   }
 
   public async ready() {

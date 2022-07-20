@@ -7,24 +7,24 @@ export default class ServerSeeder extends BaseSeeder {
     await Server.createMany([
       {
         name: 'Hong Kong',
-        host: 'dev-supernode-hk.edgecomputing.network:7787',
+        host: 'prod-hk.edgecomputing.network:7787',
         country: Country.HongKong,
       },
       {
         name: 'Singapore',
-        host: 'dev-supernode-sg.edgecomputing.network:7787',
+        host: 'prod-sg.edgecomputing.network:443',
         country: Country.Singapore,
       },
       {
         name: 'United States',
-        host: 'dev-supernode-us.edgecomputing.network:7787',
+        host: 'prod-useast.edgecomputing.network:443',
         country: Country.UnitedStates,
       },
       {
         name: 'Germany',
-        host: 'dev-supernode-de.edgecomputing.network:7787',
+        host: 'prod-de.edgecomputing.network:443',
         country: Country.Germany,
-      },
+      }
     ])
   }
 }

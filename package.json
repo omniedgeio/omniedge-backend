@@ -9,8 +9,9 @@
     "test": "node -r @adonisjs/assembler/build/register japaFile.ts"
   },
   "devDependencies": {
-    "@adonisjs/assembler": "^5.3.9",
+    "@adonisjs/assembler": "^5.8.0",
     "@types/netmask": "^1.0.30",
+    "@types/ws": "^8.5.2",
     "adonis-preset-ts": "^2.1.0",
     "execa": "^5.1.1",
     "get-port": "^5.1.1",
@@ -21,32 +22,33 @@
     "youch-terminal": "^1.1.1"
   },
   "dependencies": {
-    "@adonisjs/auth": "^8.0.10",
-    "@adonisjs/core": "^5.4.2",
-    "@adonisjs/lucid": "^16.3.2",
-    "@adonisjs/mail": "^7.2.4",
+    "@adonisjs/auth": "^8.2.1",
+    "@adonisjs/core": "^5.8.3",
+    "@adonisjs/lucid": "^18.0.1",
+    "@adonisjs/mail": "^8.1.2",
     "@adonisjs/repl": "^3.1.7",
     "@adonisjs/view": "^6.1.1",
     "@bitkidd/adonis-stripe": "^8.168.0",
     "@ivyxjc/adonis5-jwt": "0.0.9",
-    "@types/ws": "^8.2.2",
     "adonis-lucid-filter": "^4.1.0",
+    "adonis5-scheduler": "^2.0.2",
     "aws-sdk": "^2.1048.0",
     "axios": "^0.25.0",
     "geoip-lite": "^1.4.2",
     "google-auth-library": "^7.11.0",
     "is-cidr": "^4.0.2",
     "is-valid-hostname": "^1.0.2",
-    "luxon": "^2.2.0",
-    "nanoid": "^3.1.30",
+    "luxon": "^2.4.0",
+    "nanoid": "^3.3.4",
     "netmask": "^2.0.2",
     "pg": "^8.7.1",
     "phc-bcrypt": "^1.0.7",
     "ping": "^0.4.1",
     "proxy-addr": "^2.0.7",
+    "referral-code-generator": "^1.0.8",
     "reflect-metadata": "^0.1.13",
     "source-map-support": "^0.5.21",
-    "stripe": "^8.195.0",
-    "ws": "^8.4.0"
+    "stripe": "^9.9.0",
+    "ws": "^8.8.0"
   }
 }

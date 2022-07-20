@@ -9,6 +9,8 @@ import Database, { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import AuthException from 'App/Exceptions/AuthException'
 import Identity from 'App/Models/Identity'
 import Plan from 'App/Models/Plan'
+import Referral from 'App/Models/Referral'
+import ReferralRegisterUser from 'App/Models/ReferralRegisterUser'
 import SecurityKey from 'App/Models/SecurityKey'
 import Server from 'App/Models/Server'
 import User from 'App/Models/User'
@@ -65,6 +67,13 @@ export default class AuthController {
           'Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, one number and one special character',
       },
     })
+
+    const existsUser = await User.findBy('email', payload.email)
+    if (existsUser) {
+      response.formatError(400, ErrorCode.auth.E_USER_EXISTS, 'User already exists')
+      return
+    }
+
     const freePlan = await Plan.findBy('slug', 'free')
     const user = new User()
     user.email = payload.email
@@ -80,6 +89,9 @@ export default class AuthController {
     } else {
       response.formatError(502, ErrorCode.auth.E_SAVE_USER, 'Fail to save user')
     }
+    const referralCode = request.cookie('referral_code', '')
+    Logger.info(`referralCode: ${referralCode}`)
+    await this.afterUserRegistered(user, referralCode);
     const emailToken = await this.generateActivateToken(user.email)
     await Mail.use().sendLater((message) => {
       message
@@ -90,6 +102,8 @@ export default class AuthController {
           name: user.name,
           uri: this.activateEndpoint(emailToken),
         })
+    }).catch((e: Error) => {
+      Logger.error(e.message);
     })
     this.sendContactToMautic(user)
   }
@@ -122,7 +136,6 @@ export default class AuthController {
     }
     const emailToken = await this.generateActivateToken(user.email!!)
     try {
-      console.log(this.activateEndpoint(emailToken))
       await Mail.use().send((message) => {
         message
           .from(omniedgeConfig.mail.senderAddress, omniedgeConfig.mail.senderName)
@@ -204,7 +217,8 @@ export default class AuthController {
     const payload = await request.validate({ schema: authSchema, reporter: CustomReporter })
 
     // Cognito
-    const user = await User.findBy('email', payload.email)
+    const user = await User.query().where('email', payload.email).first()
+
     if (user?.cognitoId && !user.password) {
       const cognitoISP = new AWS.CognitoIdentityServiceProvider()
       try {
@@ -341,6 +355,9 @@ export default class AuthController {
       const token = await auth.use('jwt').generate(newGoogleUser, {
         expiresIn: process.env.LOGIN_TOKEN_EXPIRE,
       })
+
+      const referralCode = request.cookie('referralCode', '')
+      await this.afterUserRegistered(newGoogleUser, referralCode)
       response.format(200, token)
     } else {
       response.formatError(
@@ -533,5 +550,17 @@ export default class AuthController {
         tag: 'omniedge-backend',
       },
     })
+  }
+
+  private async afterUserRegistered(user: User, referralCode: string): Promise<void> {
+    if (referralCode) {
+      const referral = await Referral.findBy('referral_code', referralCode)
+      if (referral) {
+        await ReferralRegisterUser.create({
+          registerUserId: user.id,
+          referralCodeUserId: referral.userId,
+        })
+      }
+    }
   }
 }

@@ -98,6 +98,12 @@ Route.group(() => {
       }).prefix('servers')
 
       Route.group(() => {
+        Route.post('/', 'ReferralsController.createReferralsCode')
+        Route.delete('/:code', 'ReferralsController.deleteReferralsCode')
+        Route.get('/info', 'ReferralsController.getReferralsInfo')
+      }).prefix('/referrals')
+
+      Route.group(() => {
         Route.post('/portal-session', 'PaymentsController.createPortalSession')
         Route.post('/checkout-session', 'PaymentsController.createCheckoutSession')
       }).prefix('/payment')
@@ -105,6 +111,8 @@ Route.group(() => {
       // For v1.api
       Route.post('/auth/login/session/notify', 'v1/AuthController.notifySession')
     }).middleware('auth')
+
+    Route.get('/referrals', 'ReferralsController.setReferralCookie')
 
     Route.group(() => {
       Route.post('/webhook', 'PaymentsController.stripeWebhook')
@@ -123,6 +131,8 @@ Route.group(() => {
       Route.post('/login/security-key', 'v1/AuthController.loginWithSecurityKey')
       Route.post('/reset-password/code', 'AuthController.forgetPassword')
       Route.post('/reset-password/verify', 'AuthController.resetPasswordWithVerification')
+      Route.post('/refresh','AuthController.refresh')
+
 
       Route.get('/login/session', 'v1/AuthController.generateSession')
     }).prefix('/auth')
@@ -179,3 +189,11 @@ Route.group(() => {
 })
   .prefix('/api/v2/admin')
   .middleware('admin-auth')
+
+Route.group(() => {
+  Route.post('/token', 'Oauth2sController.accessToken')
+}).prefix('/oauth')
+
+Route.group(()=>{
+  Route.get('/health','HealthController.health')
+})

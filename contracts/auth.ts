@@ -77,6 +77,5 @@ declare module '@ioc:Adonis/Addons/Auth' {
       implementation: JWTGuardContract<'user', 'admin'>,
       config: JWTGuardConfig<'user'>,
     };
-
   }
 }

@@ -1,21 +1,66 @@
-name: omniedge compile
+name: omniedge docker build
 
 on:
   push:
     branches:
-    #  - dev
-    #  - main
+      - dev
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: environment [dev,prod]
+        default: dev
+        required: true
+      tag:
+        description: build with tag (optional)
+        required: false
+      invokeDeploy:
+        description: invoke deploy (optional)
+        type: boolean
+        required: false
 
 jobs:
   build:
     name: Build on ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ ubuntu-20.04 ]
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+      INVOKE_DEPLOY: ${{ github.event.inputs.invokeDeploy || 'false' }}
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Show CPU Model and Free Space
+        run: |
+          echo -e "Total CPU cores\t: $(nproc)"
+          cat /proc/cpuinfo | grep 'model name'
+          free -h
+
+      - name: Show system info
+        run: |
+          echo -e "system info: $(uname -a)"
+
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H:%M:%S')"
+
+      - uses: actions/checkout@v2
+        name: checkout HEAD
+        if: ${{ ! github.event.inputs.tag }}
+
+      - uses: actions/checkout@v2
+        name: checkout with tag
+        if: ${{ github.event.inputs.tag }}
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag }}
+
+      - run: |
+          git_hash=$(git rev-parse --short HEAD)
+          echo "GIT_SHORT_SHA=$git_hash" >> $GITHUB_ENV
+
+      - name: git tag
+        if: ${{ github.event.inputs.tag }}
+        run: |
+          echo "GIT_TAG=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -41,21 +86,36 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha
 
-      - name: Show CPU Model and Free Space
+      - name: notice
         run: |
-          echo -e "Total CPU cores\t: $(nproc)"
-          cat /proc/cpuinfo | grep 'model name'
-          free -h
-
-      - name: Show system info
-        run: |
-          echo -e "system info: $(uname -a)"
+          DOCKER_TAGS="${{steps.meta.outputs.tags}}"
+          DOCKER_TAGS="${DOCKER_TAGS//'%'/'%25'}"
+          DOCKER_TAGS="${DOCKER_TAGS//$'\n'/'%0A'}"
+          DOCKER_TAGS="${DOCKER_TAGS//$'\r'/'%0D'}"
+          echo "::set-output name=content::$DOCKER_TAGS"
+          echo "::notice ::docker-tag:$DOCKER_TAGS"
 
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           file: docker/Dockerfile
+          build-args: |
+            GIT_SHA=${{ env.GIT_SHORT_SHA }}
+            GIT_TAG=${{ env.GIT_TAG }}
+            BUILD_TIME=${{ steps.date.outputs.date }}
           push: true
           context: .
           tags: ${{ steps.meta.outputs.tags }}
+
+      - name: default tag is latest
+        run: |
+          echo "REPO_TAG=latest" >> $GITHUB_ENV
+
+      - name: Invoke deploy workflow
+        if: ${{ env.ENVIRONMENT == 'dev' || env.INVOKE_DEPLOY == 'true' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: omniedge ecs deploy
+          token: ${{ secrets.USER_GITHUB_TOKEN }}
+          inputs: '{"envName":"${{env.ENVIRONMENT}}","repoTag":"${{env.REPO_TAG}}"}'

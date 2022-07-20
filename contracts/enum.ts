@@ -8,6 +8,10 @@ export enum AuthType {
   Google = 'google',
 }
 
+export enum RegisterType {
+  Referral = 'referral',
+}
+
 export enum UserRole {
   User = 1,
   Admin = 2,
@@ -35,6 +39,8 @@ export enum ServerType {
 }
 
 export enum Country {
+  UnitedStatesEast = 'UE',
+  UnitedStatesWest = 'UW',
   UnitedStates = 'US',
   Afghanistan = 'AF',
   AlandIslands = 'AX',

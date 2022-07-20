@@ -1,8 +1,10 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { rules, schema } from '@ioc:Adonis/Core/Validator'
+import Referral from 'App/Models/Referral'
 import { CustomReporter } from 'App/Validators/Reporters/CustomReporter'
 import { UsageKey } from 'Contracts/enum'
 import Omniedge from 'Contracts/omniedge'
+import Logger from '@ioc:Adonis/Core/Logger'
 import { DateTime } from 'luxon'
 import { ErrorCode } from '../../../utils/constant'
 
@@ -11,8 +13,12 @@ export default class ProfilesController {
     const user = auth.user!
     await user.load('plan')
     await user.load('identities')
-
-    const subscription = await user.getStripeSubcription()
+    let subscription: any
+    try {
+      subscription = await user.getStripeSubcription()
+    } catch (e) {
+      Logger.error(e)
+    }
 
     const usageLimits = {
       devices: {
@@ -24,6 +30,8 @@ export default class ProfilesController {
         usage: await user.getUsage(UsageKey.VirtualNetworks),
       },
     }
+
+    const referral = await Referral.findBy('user_id', user.id)
 
     response.format(200, {
       id: user.id,
@@ -39,6 +47,7 @@ export default class ProfilesController {
         cancel_at: subscription?.cancel_at && DateTime.fromSeconds(subscription?.cancel_at),
       },
       usage_limits: usageLimits,
+      referral_code: referral ? referral.referralCode : '',
     })
   }
 
