@@ -29,7 +29,7 @@
     "@adonisjs/repl": "^3.1.7",
     "@adonisjs/view": "^6.1.1",
     "@bitkidd/adonis-stripe": "^8.168.0",
-    "@ivyxjc/adonis5-jwt": "0.0.9",
+    "@ivyxjc/adonis5-jwt": "0.0.10",
     "adonis-lucid-filter": "^4.1.0",
     "adonis5-scheduler": "^2.0.2",
     "aws-sdk": "^2.1048.0",
