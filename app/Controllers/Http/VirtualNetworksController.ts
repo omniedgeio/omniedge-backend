@@ -144,7 +144,7 @@ export default class VirtualNetworksController {
       reporter: CustomReporter,
     })
 
-    const user = auth.user!
+    // const user = auth.user!
     const virtualNetwork = await auth.user
       ?.related('virtualNetworks')
       .query()
