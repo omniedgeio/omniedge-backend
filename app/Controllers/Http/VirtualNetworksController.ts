@@ -53,9 +53,9 @@ export default class VirtualNetworksController {
     let server: Server | null
 
     if (data.server?.host) {
-      if (await user.isFreePlan()) {
-        return response.format(400, 'Please upgrade your plan to support customized supernode')
-      }
+      // if (await user.isFreePlan()) {
+      //   return response.format(400, 'Please upgrade your plan to support customized supernode')
+      // }
       const location = geoip.lookup(data.server.host)
       server = await Server.create({
         host: `${data.server.host}:${data.server.port || 5565}`,
@@ -159,9 +159,9 @@ export default class VirtualNetworksController {
     const server = virtualNetwork.server
 
     if (data.server?.host) {
-      if (await user.isFreePlan()) {
-        return response.format(400, 'Please upgrade your plan to support customized supernode')
-      }
+      // if (await user.isFreePlan()) {
+      //   return response.format(400, 'Please upgrade your plan to support customized supernode')
+      // }
       if (server.type === ServerType.SelfHosted) {
         server.host = `${data.server.host}:${data.server.port || 7787}`
         await server.save()
