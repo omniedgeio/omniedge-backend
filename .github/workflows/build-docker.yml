@@ -14,7 +14,7 @@ on:
         description: build with tag (optional)
         required: false
       repoTag:
-        description: build with tag (optional)
+        description: repo tag's name
         default: latest
         required: true
       invokeDeploy:
