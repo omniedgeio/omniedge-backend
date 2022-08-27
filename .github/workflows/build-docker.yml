@@ -10,9 +10,13 @@ on:
         description: environment [dev,prod]
         default: dev
         required: true
-      tag:
+      gitTag:
         description: build with tag (optional)
         required: false
+      repoTag:
+        description: build with tag (optional)
+        default: latest
+        required: true
       invokeDeploy:
         description: invoke deploy (optional)
         type: boolean
@@ -27,6 +31,7 @@ jobs:
     env:
       ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
       INVOKE_DEPLOY: ${{ github.event.inputs.invokeDeploy || 'false' }}
+      REPO_TAG: ${{ github.event.inputs.repoTag }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Show CPU Model and Free Space
@@ -45,22 +50,22 @@ jobs:
 
       - uses: actions/checkout@v2
         name: checkout HEAD
-        if: ${{ ! github.event.inputs.tag }}
+        if: ${{ ! github.event.inputs.gitTag }}
 
       - uses: actions/checkout@v2
         name: checkout with tag
-        if: ${{ github.event.inputs.tag }}
+        if: ${{ github.event.inputs.gitTag }}
         with:
-          ref: refs/tags/${{ github.event.inputs.tag }}
+          ref: refs/tags/${{ github.event.inputs.gitTag }}
 
       - run: |
           git_hash=$(git rev-parse --short HEAD)
           echo "GIT_SHORT_SHA=$git_hash" >> $GITHUB_ENV
 
       - name: git tag
-        if: ${{ github.event.inputs.tag }}
+        if: ${{ github.event.inputs.gitTag }}
         run: |
-          echo "GIT_TAG=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          echo "GIT_TAG=${{ github.event.inputs.gitTag }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -80,7 +85,7 @@ jobs:
           images: |
             171635321995.dkr.ecr.us-east-2.amazonaws.com/omniedge-adonis-backend
           tags: |
-            latest
+            ${{env.REPO_TAG}}
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
