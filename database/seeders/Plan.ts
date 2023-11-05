@@ -21,6 +21,12 @@ export default class PlanSeeder extends BaseSeeder {
         title: 'Teams',
         stripePriceId: 'price_1JfTXBHh92iCAESpHznYpWVX',
       },
+      {
+        id: 'plan_0004',
+        slug: 'sme',
+        title: 'SME',
+        stripePriceId: 'price_1JfTXBHh92iCAESpHznYpWVX',
+      },
     ])
   }
 }

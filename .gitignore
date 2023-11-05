@@ -8,3 +8,5 @@ tmp
 .env
 .env.prod
 .env.dev
+deploy.sh
+.env
